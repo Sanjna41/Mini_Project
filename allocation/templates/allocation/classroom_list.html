@@ -1,0 +1,48 @@
+{% extends 'allocation/base.html' %}
+{% block title %}Classrooms{% endblock %}
+{% block page_header %}Classrooms{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Classroom List</h5>
+            <a href="{% url 'allocation:classroom_add' %}" class="btn btn-sm btn-primary">
+                Add Classroom
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                        <th>Layout</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in classroom_list %}
+                    <tr>
+                        <td>{{ c.name }}</td>
+                        <td>{{ c.capacity }}</td>
+                        <td>{{ c.rows }} rows × {{ c.columns }} columns</td>
+                        <td class="text-end">
+                            <a href="{% url 'allocation:classroom_edit' c.pk %}" class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            No classrooms added yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

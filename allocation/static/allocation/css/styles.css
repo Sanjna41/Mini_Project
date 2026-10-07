@@ -1,0 +1,25 @@
+#sidebar .nav-link {
+    border-radius: 0.35rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+
+#sidebar .nav-link.active {
+    font-weight: 600;
+}
+
+.table-sm th,
+.table-sm td {
+    vertical-align: middle;
+}
+
+.badge.bg-danger-subtle {
+    background-color: #fde2e1;
+}
+
+label[for="id_subject"] {
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+

@@ -1,0 +1,46 @@
+{% extends 'allocation/base.html' %}
+{% block title %}PhD Scholars{% endblock %}
+{% block page_header %}PhD Scholars{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">PhD Scholar List</h5>
+            <a href="{% url 'allocation:phd_add' %}" class="btn btn-sm btn-primary">
+                Add PhD Scholar
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Duty Quota</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in phd_list %}
+                    <tr>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.duty_quota }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'allocation:phd_edit' p.pk %}" class="btn btn-sm btn-outline-secondary">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">
+                            No PhD scholars added yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

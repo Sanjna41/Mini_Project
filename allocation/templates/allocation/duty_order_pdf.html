@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: sans-serif; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #333; padding: 4px; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h3 style="text-align:center;">Exam Duty Order</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Name</th>
+        <th>Designation</th>
+        <th>Date</th>
+        <th>Slot</th>
+        <th>Room</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in allocations %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ a.faculty|default_if_none:a.phd_scholar }}</td>
+        <td>{% if a.faculty %}{{ a.faculty.get_designation_display }}{% else %}PhD Scholar{% endif %}</td>
+        <td>{{ a.exam_schedule.date }}</td>
+        <td>{{ a.exam_schedule.get_slot_display }}</td>
+        <td>{{ a.classroom.name }}</td>
+        <td>{{ a.get_role_type_display }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
+

@@ -1,0 +1,50 @@
+{% extends 'allocation/base.html' %}
+{% block title %}UFM History{% endblock %}
+{% block page_header %}UFM History{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Unfair Means (UFM) Records</h5>
+            <a href="{% url 'allocation:ufm_record_add' %}" class="btn btn-sm btn-primary">
+                Add UFM Record
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Person</th>
+                        <th>Type</th>
+                        <th>Exam</th>
+                        <th>Count</th>
+                        <th>Notes</th>
+                        <th>Recorded At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ r.faculty|default_if_none:r.phd_scholar }}</td>
+                        <td>{% if r.faculty %}Faculty{% else %}PhD Scholar{% endif %}</td>
+                        <td>{{ r.exam_schedule }}</td>
+                        <td><span class="badge bg-danger-subtle border border-danger text-danger">{{ r.count }}</span></td>
+                        <td>{{ r.notes|default:"-" }}</td>
+                        <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            No UFM records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

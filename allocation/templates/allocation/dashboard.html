@@ -1,0 +1,146 @@
+{% extends 'allocation/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_header %}Dashboard Overview{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase mb-1">Faculty</h6>
+                <h3 class="fw-semibold mb-0">{{ faculty_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase mb-1">PhD Scholars</h6>
+                <h3 class="fw-semibold mb-0">{{ phd_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase mb-1">Classrooms</h6>
+                <h3 class="fw-semibold mb-0">{{ classroom_count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase mb-1">Exam Schedules</h6>
+                <h3 class="fw-semibold mb-0">{{ exam_count }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-1">Automatic Duty Allocation</h5>
+                    <p class="text-muted mb-0 small">
+                        Current duties: <span class="fw-semibold">{{ allocation_count }}</span>
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
+                    <button type="button" id="btn-generate-ajax" class="btn btn-primary">
+                        Generate Allocation
+                    </button>
+                    <a href="{% url 'allocation:export_allocation_csv' %}" class="btn btn-outline-secondary">
+                        Export to CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <h6 class="mb-3 text-muted text-uppercase">Quick Actions</h6>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'allocation:faculty_add' %}" class="btn btn-outline-primary btn-sm">Add Faculty</a>
+                    <a href="{% url 'allocation:phd_add' %}" class="btn btn-outline-primary btn-sm">Add PhD Scholar</a>
+                    <a href="{% url 'allocation:classroom_add' %}" class="btn btn-outline-primary btn-sm">Add Classroom</a>
+                    <a href="{% url 'allocation:exam_schedule_add' %}" class="btn btn-outline-primary btn-sm">Add Exam Schedule</a>
+                    <a href="{% url 'allocation:allocation_result' %}" class="btn btn-outline-primary btn-sm">View Allocations</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-body">
+    <h6 class="mb-3">Faculty Duty Distribution</h6>
+    <canvas id="dutyChart" height="120"></canvas>
+  </div>
+</div>
+
+<script>
+  const ctx = document.getElementById('dutyChart');
+  const labels = {{ chart_labels|safe }};
+  const data = {{ chart_data|safe }};
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Number of Duties',
+        data: data,
+        backgroundColor: 'rgba(13, 110, 253, 0.6)',
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  document.getElementById('btn-generate-ajax').addEventListener('click', function () {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    fetch("{% url 'allocation:run_allocation_ajax' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrftoken,
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+    .then(res => res.json().then(data => ({ok: res.ok, data})))
+    .then(({ok, data}) => {
+      btn.disabled = false;
+      btn.textContent = 'Generate Allocation';
+      if (ok && data.status === 'ok') {
+        alert(`Allocation completed. Created ${data.created} duties.`);
+        location.reload();
+      } else {
+        alert(`Allocation failed: ${data.message || 'Unknown error'}`);
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = 'Generate Allocation';
+      alert('Network error during allocation.');
+    });
+  });
+</script>
+{% endblock %}
+

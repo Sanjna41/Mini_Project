@@ -1,0 +1,122 @@
+{% extends 'allocation/base.html' %}
+{% block title %}Allocation Table{% endblock %}
+{% block page_header %}Allocation Table{% endblock %}
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Final Invigilation Duty Allocation</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <form class="d-flex flex-wrap gap-2" method="get">
+                    <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm"
+                           placeholder="Search name/room">
+                    <input type="date"
+                        name="date"
+                       value="{{ date_filter }}"
+                       class="form-control form-control-sm">
+                    <select name="slot" class="form-select form-select-sm">
+                        <option value="">All Slots</option>
+
+                        <option value="MORNING"
+                         {% if slot_filter and slot_filter|upper == "MORNING" %}selected{% endif %}>
+                        Morning
+                        </option>
+
+                     <option value="EVENING"
+                    {% if slot_filter and slot_filter|upper == "EVENING" %}selected{% endif %}>
+                    Evening
+                   </option>
+                  </select>
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
+                </form>
+                <a href="{% url 'allocation:duty_order_pdf' %}" class="btn btn-sm btn-outline-secondary">
+                    Download Duty Order (PDF)
+                </a>
+                <a href="{% url 'allocation:export_allocation_csv' %}" class="btn btn-sm btn-outline-secondary">
+                    Export to CSV
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>S. No</th>
+                        <th>Faculty / Scholar</th>
+                        <th>Designation</th>
+                        <th>Date</th>
+                        <th>Slot</th>
+                        <th>Room</th>
+                        <th>Role</th>
+                        <th>Detained Alert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                        <td>{{ a.faculty|default_if_none:a.phd_scholar }}</td>
+                        <td>
+                            {% if a.faculty %}
+                                {{ a.faculty.get_designation_display }}
+                            {% else %}
+                                PhD Scholar
+                            {% endif %}
+                        </td>
+                        <td>{{ a.exam_schedule.date }}</td>
+                        <td>{{ a.exam_schedule.get_slot_display }}</td>
+                        <td>{{ a.classroom.name }}</td>
+                        <td>{{ a.get_role_type_display }}</td>
+                        <td>
+                            {% if a.detained_round != "NONE" %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ a.get_detained_round_display }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            No allocations yet. Use "Generate Allocation" from the dashboard.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <nav aria-label="Page navigation" class="mt-3">
+          <ul class="pagination pagination-sm justify-content-end">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&date={{ date_filter }}&slot={{ slot_filter }}">«</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">«</span></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ num }}&q={{ q }}&date={{ date_filter }}&slot={{ slot_filter }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&date={{ date_filter }}&slot={{ slot_filter }}">»</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">»</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
