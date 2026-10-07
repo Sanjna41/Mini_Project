@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Edit PhD Scholar | ExamDutyManager{% endblock %}
+{% block page_title %}Edit PhD Scholar{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+
+        {# ── Breadcrumb ── #}
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:dashboard' %}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:phd_list' %}">PhD Scholars</a>
+                </li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white fw-semibold">
+                <i class="bi bi-pencil me-2"></i>{{ title }}
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {# ── User Fields ── #}
+                    <h6 class="fw-semibold text-muted mb-3 border-bottom pb-2">
+                        <i class="bi bi-person me-1"></i>Personal Information
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.email.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# ── PhD Fields ── #}
+                    <h6 class="fw-semibold text-muted mb-3 border-bottom pb-2 mt-4">
+                        <i class="bi bi-mortarboard me-1"></i>Scholar Information
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Max Duties</label>
+                            {{ form.max_duties }}
+                            {% if form.max_duties.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.max_duties.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Status</label>
+                            <div class="form-check mt-2">
+                                {{ form.is_active }}
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.is_active.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# ── Non field errors ── #}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    {# ── Buttons ── #}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-save me-1"></i>Save Changes
+                        </button>
+                        <a href="{% url 'allocation:phd_list' %}"
+                           class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

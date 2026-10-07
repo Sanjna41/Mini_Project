@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Allocation Table | ExamDutyManager{% endblock %}
+{% block page_title %}Allocation Table{% endblock %}
+
+{% block content %}
+
+{# ── Header ── #}
+<div class="row mb-3 align-items-center">
+    <div class="col">
+        <h2 class="h4 fw-bold mb-1">
+            <i class="bi bi-table me-2 text-secondary"></i>Duty Allocation Table
+        </h2>
+        {% if exam %}
+            <p class="text-muted mb-0">
+                <strong>{{ exam.course_name }}</strong>
+                {% if exam.course_code %}({{ exam.course_code }}){% endif %}
+                | Date: {{ exam.date }}
+                | Slot: {{ exam.get_time_slot_display }}
+            </p>
+        {% else %}
+            <p class="text-muted mb-0">All duty allocations.</p>
+        {% endif %}
+    </div>
+
+    {# ── Action Buttons ── #}
+    <div class="col-auto d-flex gap-2 flex-wrap">
+
+        {# Export CSV #}
+        <a href="{% url 'allocation:export_allocations_csv' %}{% if exam %}?exam_id={{ exam.id }}{% endif %}"
+           class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-csv me-1"></i>Export CSV
+        </a>
+        {% if exam %}
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#resendEmailModal">
+                <i class="bi bi-envelope me-1"></i>Resend Emails
+            </button>
+        {% endif %}
+
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent fw-semibold border-0 pt-3">
+        <i class="bi bi-person-check text-primary me-2"></i>Duty Allocations
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark" >
+                    <tr>
+                        <th>#</th>
+                        <th>Exam</th>
+                        <th>Date</th>
+                        <th>Slot</th>
+                        <th>Classroom</th>
+                        <th>Assigned To</th>
+                        <th>Role</th>
+                        <th>Designation</th>
+                        <th>Confirmed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alloc in allocations %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-semibold">{{ alloc.exam.course_name }}</td>
+                        <td>{{ alloc.exam.date }}</td>
+                        <td>
+                            {% if alloc.exam.time_slot == 'MORNING' %}
+                                <span class="badge bg-warning text-dark">Morning</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Evening</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ alloc.classroom.name }}</td>
+                        <td class="fw-semibold">
+                            {{ alloc.assigned_to.get_full_name|default:alloc.assigned_to.username }}
+                        </td>
+                        <td>
+                            {% if alloc.role == 'FACULTY' %}
+                                <span class="badge bg-primary">Faculty</span>
+                            {% else %}
+                                <span class="badge bg-success">PhD Scholar</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if alloc.role == 'FACULTY' %}
+                                {% with f=alloc.assigned_to.faculty %}
+                                    {% if f %}
+                                        <small>{{ f.get_designation_display }}</small>
+                                    {% else %}
+                                        <small class="text-muted">—</small>
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <small class="text-muted">PhD Scholar</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if alloc.is_confirmed %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check"></i> Yes
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-table fs-2 d-block mb-2"></i>
+                            No allocations found.
+                            <a href="{% url 'allocation:run_allocation' %}">
+                                Run allocation first!
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# ── Seating Allocation Table ── #}
+{% if seating_allocations %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent fw-semibold border-0 pt-3">
+        <i class="bi bi-grid text-success me-2"></i>Seating Allocation
+        (Roll Number Ranges)
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Classroom</th>
+                        <th>Roll From</th>
+                        <th>Roll To</th>
+                        <th>Students Seated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in seating_allocations %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-semibold">{{ s.classroom.name }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ s.start_roll }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ s.end_roll }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary rounded-pill">
+                                {{ s.capacity_used }} seats
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            No seating allocation generated.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if exam %}
+<div class="modal fade" id="resendEmailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-envelope me-2"></i>Resend Duty Emails
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Resend duty allocation emails for:</p>
+                <div class="alert alert-info py-2 mb-3">
+                    <strong>{{ exam.course_name }}</strong><br>
+                    <small>
+                        {{ exam.date }} | {{ exam.get_time_slot_display }}
+                    </small>
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Emails will be sent to all faculty and PhD scholars
+                    allocated for this exam.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <a href="{% url 'allocation:resend_allocation_emails' exam.id %}"
+                   class="btn btn-primary">
+                    <i class="bi bi-envelope me-1"></i>Yes, Send Emails
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

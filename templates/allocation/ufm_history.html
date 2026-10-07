@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}UFM History | ExamDutyManager{% endblock %}
+{% block page_title %}UFM History{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3 align-items-center">
+    <div class="col">
+        <h2 class="h4 fw-bold mb-1">
+            <i class="bi bi-clock-history me-2 text-danger"></i>UFM History
+        </h2>
+        <p class="text-muted mb-0">Unfair means records across all exams.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Exam</th>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>UFM Count</th>
+                        <th>Description</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-semibold">{{ record.exam.course_name }}</td>
+                        <td>{{ record.exam.date }}</td>
+                        <td>{{ record.user.get_full_name|default:record.user.username }}</td>
+                        <td>
+                            {% if record.user.faculty %}
+                                <span class="badge bg-primary">Faculty</span>
+                            {% elif record.user.phdscholar %}
+                                <span class="badge bg-success">PhD Scholar</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-danger rounded-pill fs-6">
+                                {{ record.count }}
+                            </span>
+                        </td>
+                        <td>{{ record.description|default:"-" }}</td>
+                        <td>{{ record.last_updated|date:"d M Y, H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-shield-check fs-2 d-block mb-2 text-success"></i>
+                            No UFM records found. Great!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

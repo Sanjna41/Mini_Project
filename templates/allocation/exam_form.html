@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Exam Schedule | ExamDutyManager{% endblock %}
+{% block page_title %}Edit Exam Schedule{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        {# ── Breadcrumb ── #}
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:dashboard' %}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:exam_list' %}">Exam Schedule</a>
+                </li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white fw-semibold">
+                <i class="bi bi-pencil me-2"></i>{{ title }}
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {# ── Course Info ── #}
+                    <h6 class="fw-semibold text-muted mb-3 border-bottom pb-2">
+                        <i class="bi bi-book me-1"></i>Course Information
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">
+                                Course Name <span class="text-danger">*</span>
+                            </label>
+                            {{ form.course_name }}
+                            {% if form.course_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.course_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Course Code</label>
+                            {{ form.course_code }}
+                            {% if form.course_code.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.course_code.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# ── Schedule Info ── #}
+                    <h6 class="fw-semibold text-muted mb-3 border-bottom pb-2 mt-4">
+                        <i class="bi bi-calendar-event me-1"></i>Schedule Information
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                Time Slot <span class="text-danger">*</span>
+                            </label>
+                            {{ form.time_slot }}
+                            {% if form.time_slot.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.time_slot.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                Start Time <span class="text-danger">*</span>
+                            </label>
+                            {{ form.start_time }}
+                            {% if form.start_time.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.start_time.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                End Time <span class="text-danger">*</span>
+                            </label>
+                            {{ form.end_time }}
+                            {% if form.end_time.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.end_time.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# ── Students & Classrooms ── #}
+                    <h6 class="fw-semibold text-muted mb-3 border-bottom pb-2 mt-4">
+                        <i class="bi bi-building me-1"></i>Students & Classrooms
+                    </h6>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Expected Students</label>
+                        {{ form.expected_students }}
+                        {% if form.expected_students.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.expected_students.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Classrooms <span class="text-danger">*</span>
+                        </label>
+                        <div class="border rounded p-3">
+                            {{ form.classrooms }}
+                        </div>
+                        {% if form.classrooms.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.classrooms.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.notes.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# ── Non field errors ── #}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    {# ── Buttons ── #}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-info text-white px-4">
+                            <i class="bi bi-save me-1"></i>Save Changes
+                        </button>
+                        <a href="{% url 'allocation:exam_list' %}"
+                           class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

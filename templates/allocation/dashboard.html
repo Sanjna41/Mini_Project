@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | ExamDutyManager{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+{# ── Welcome ── #}
+<div class="row mb-4">
+    <div class="col">
+        <h2 class="h4 fw-bold mb-1">
+            Welcome, {{ request.user.get_full_name|default:request.user.username }}! 👋
+        </h2>
+        <p class="text-muted mb-0">Quick snapshot of invigilation resources and allocations.</p>
+    </div>
+</div>
+
+{# ── Stats Cards ── #}
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">Faculty</div>
+                        <div class="fs-3 fw-bold">{{ faculty_count }}</div>
+                    </div>
+                    <div class="fs-1 text-primary opacity-75">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:faculty_list' %}"
+                   class="btn btn-sm btn-outline-primary mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">PhD Scholars</div>
+                        <div class="fs-3 fw-bold">{{ phd_count }}</div>
+                    </div>
+                    <div class="fs-1 text-success opacity-75">
+                        <i class="bi bi-mortarboard"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:phd_list' %}"
+                   class="btn btn-sm btn-outline-success mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">Classrooms</div>
+                        <div class="fs-3 fw-bold">{{ classroom_count }}</div>
+                    </div>
+                    <div class="fs-1 text-warning opacity-75">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:classroom_list' %}"
+                   class="btn btn-sm btn-outline-warning mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">Exams</div>
+                        <div class="fs-3 fw-bold">{{ exam_count }}</div>
+                    </div>
+                    <div class="fs-1 text-info opacity-75">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:exam_list' %}"
+                   class="btn btn-sm btn-outline-info mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">Allocations</div>
+                        <div class="fs-3 fw-bold">{{ allocation_count }}</div>
+                    </div>
+                    <div class="fs-1 text-secondary opacity-75">
+                        <i class="bi bi-table"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:allocation_table' %}"
+                   class="btn btn-sm btn-outline-secondary mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-sm-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted text-uppercase small mb-1">UFM Records</div>
+                        <div class="fs-3 fw-bold">{{ ufm_count }}</div>
+                    </div>
+                    <div class="fs-1 text-danger opacity-75">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <a href="{% url 'allocation:ufm_history' %}"
+                   class="btn btn-sm btn-outline-danger mt-2">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Quick Actions ── #}
+<div class="row mb-4">
+    <div class="col">
+        <h5 class="fw-semibold mb-3">
+            <i class="bi bi-lightning text-warning me-2"></i>Quick Actions
+        </h5>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'allocation:faculty_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-person-plus me-1"></i>Add Faculty
+            </a>
+            <a href="{% url 'allocation:phd_list' %}" class="btn btn-outline-success">
+                <i class="bi bi-person-plus me-1"></i>Add PhD Scholar
+            </a>
+            <a href="{% url 'allocation:classroom_list' %}" class="btn btn-outline-warning">
+                <i class="bi bi-building-add me-1"></i>Add Classroom
+            </a>
+            <a href="{% url 'allocation:exam_list' %}" class="btn btn-outline-info">
+                <i class="bi bi-calendar-plus me-1"></i>Add Exam
+            </a>
+            <a href="{% url 'allocation:run_allocation' %}" class="btn btn-primary">
+                <i class="bi bi-lightning-fill me-1"></i>Generate Allocation
+            </a>
+            <a href="{% url 'allocation:export_allocations_csv' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-csv me-1"></i>Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ── Info Cards ── #}
+<div class="row g-3">
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-primary text-white fw-semibold">
+                <i class="bi bi-bell me-2"></i>Detained Alert System
+            </div>
+            <div class="card-body">
+                <ul class="mb-3 ps-3">
+                    <li class="mb-2">
+                        <strong>Round 1 — Doubt round:</strong>
+                        triggered when capacity is sufficient — monitor late entries.
+                    </li>
+                    <li>
+                        <strong>Round 2 — Shortage alert:</strong>
+                        triggered when expected students exceed total classroom capacity.
+                    </li>
+                </ul>
+                <a href="{% url 'allocation:exam_list' %}"
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-calendar-event me-1"></i>Review Exam Capacity
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-secondary text-white fw-semibold">
+                <i class="bi bi-shield-check me-2"></i>Allocation Rules
+            </div>
+            <div class="card-body">
+                <ul class="mb-3 ps-3">
+                    <li class="mb-2">No overlapping duties per date and slot.</li>
+                    <li class="mb-2">Per room: 1 Professor, 2 Assistant Professors, 3 PhD Scholars.</li>
+                    <li class="mb-2">Minimum 1-slot gap for Professors and PhD Scholars.</li>
+                    <li>UFM history used for fair weighted distribution.</li>
+                </ul>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'allocation:run_allocation' %}"
+                       class="btn btn-primary btn-sm">
+                        <i class="bi bi-lightning me-1"></i>Generate Allocation
+                    </a>
+                    <a href="{% url 'allocation:ufm_history' %}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-clock-history me-1"></i>UFM History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

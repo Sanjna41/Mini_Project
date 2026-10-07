@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Allocation | ExamDutyManager{% endblock %}
+{% block page_title %}Generate Allocation{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+
+        {# ── Main Form Card ── #}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-lightning-fill me-2"></i>Generate Duty Allocation
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-4">
+                    <i class="bi bi-envelope-fill"></i>
+                    <span>
+                        Duty allocation emails will be sent
+                        <strong>automatically</strong> to all
+                        assigned faculty and PhD scholars.
+                    </span>
+                </div>
+
+                <p class="text-muted mb-4">
+                    Select an exam to automatically allocate duties
+                    based on availability and UFM history.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            {{ form.exam.label }}
+                        </label>
+                        {{ form.exam }}
+                        {% if form.exam.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.exam.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="runBtn">
+                        <span id="btnText">
+                            <i class="bi bi-lightning-fill me-2"></i>
+                            Run Allocation & Send Emails
+                        </span>
+                        <span id="btnSpinner" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            Generating & Sending Emails...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {# ── Allocation Rules ── #}
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="fw-semibold mb-3">
+                    <i class="bi bi-info-circle text-primary me-2"></i>
+                    Allocation Rules
+                </h6>
+                <ul class="mb-0 small text-muted ps-3">
+                    <li class="mb-1">1 Professor per classroom</li>
+                    <li class="mb-1">2 Assistant Professors per classroom</li>
+                    <li class="mb-1">3 PhD Scholars per classroom</li>
+                    <li class="mb-1">No overlapping duties in same time slot</li>
+                    <li class="mb-1">UFM history used for fair weighting</li>
+                    <li>
+                        <i class="bi bi-envelope text-primary me-1"></i>
+                        Emails sent automatically after allocation
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        
+        {% if recent_exams %}
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-header bg-transparent fw-semibold border-0 pt-3">
+                <i class="bi bi-clock-history text-secondary me-2"></i>
+                Recent Allocations — Resend Emails
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Course</th>
+                                <th>Date</th>
+                                <th>Slot</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in recent_exams %}
+                            <tr>
+                                <td class="fw-semibold">{{ exam.course_name }}</td>
+                                <td>{{ exam.date }}</td>
+                                <td>
+                                    {% if exam.time_slot == 'MORNING' %}
+                                        <span class="badge bg-warning text-dark">
+                                            Morning
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark">
+                                            Evening
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        {# View allocation #}
+                                        <a href="{% url 'allocation:allocation_table' %}?exam_id={{ exam.id }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-table"></i>
+                                        </a>
+                                        {# Resend email #}
+                                        <a href="{% url 'allocation:resend_allocation_emails' exam.id %}"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Resend Emails"
+                                           onclick="return confirm('Resend emails for {{ exam.course_name }}?')">
+                                            <i class="bi bi-envelope"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelector('form').addEventListener('submit', function () {
+        document.getElementById('btnText').classList.add('d-none');
+        document.getElementById('btnSpinner').classList.remove('d-none');
+        document.getElementById('runBtn').disabled = true;
+    });
+</script>
+{% endblock %}

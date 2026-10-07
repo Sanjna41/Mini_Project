@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Classroom | ExamDutyManager{% endblock %}
+{% block page_title %}Edit Classroom{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        {# ── Breadcrumb ── #}
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:dashboard' %}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'allocation:classroom_list' %}">Classrooms</a>
+                </li>
+                <li class="breadcrumb-item active">Edit</li>
+            </ol>
+        </nav>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-warning text-dark fw-semibold">
+                <i class="bi bi-pencil me-2"></i>{{ title }}
+            </div>
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Room Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Capacity <span class="text-danger">*</span>
+                        </label>
+                        {{ form.capacity }}
+                        {% if form.capacity.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.capacity.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Availability</label>
+                        <div class="form-check">
+                            {{ form.is_available }}
+                            <label class="form-check-label">Available for exam</label>
+                        </div>
+                        {% if form.is_available.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.is_available.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# ── Non field errors ── #}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    {# ── Buttons ── #}
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-warning px-4">
+                            <i class="bi bi-save me-1"></i>Save Changes
+                        </button>
+                        <a href="{% url 'allocation:classroom_list' %}"
+                           class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-x me-1"></i>Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
