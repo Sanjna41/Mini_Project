@@ -110,7 +110,7 @@
                         <i class="bi bi-table"></i>
                     </div>
                 </div>
-                <a href="{% url 'allocation:allocation_table' %}"
+                <a href="{% url 'allocation:allocation_result' %}"
                    class="btn btn-sm btn-outline-secondary mt-2">
                     View All
                 </a>
@@ -130,7 +130,7 @@
                         <i class="bi bi-exclamation-triangle"></i>
                     </div>
                 </div>
-                <a href="{% url 'allocation:ufm_history' %}"
+                <a href="{% url 'allocation:ufm_record_list' %}"
                    class="btn btn-sm btn-outline-danger mt-2">
                     View All
                 </a>
@@ -147,22 +147,22 @@
             <i class="bi bi-lightning text-warning me-2"></i>Quick Actions
         </h5>
         <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'allocation:faculty_list' %}" class="btn btn-outline-primary">
+            <a href="{% url 'allocation:faculty_add' %}" class="btn btn-outline-primary">
                 <i class="bi bi-person-plus me-1"></i>Add Faculty
             </a>
-            <a href="{% url 'allocation:phd_list' %}" class="btn btn-outline-success">
+            <a href="{% url 'allocation:phd_add' %}" class="btn btn-outline-success">
                 <i class="bi bi-person-plus me-1"></i>Add PhD Scholar
             </a>
-            <a href="{% url 'allocation:classroom_list' %}" class="btn btn-outline-warning">
+            <a href="{% url 'allocation:classroom_add' %}" class="btn btn-outline-warning">
                 <i class="bi bi-building-add me-1"></i>Add Classroom
             </a>
-            <a href="{% url 'allocation:exam_schedule_list' %}" class="btn btn-outline-info">
+            <a href="{% url 'allocation:exam_schedule_add' %}" class="btn btn-outline-info">
                 <i class="bi bi-calendar-plus me-1"></i>Add Exam
             </a>
             <a href="{% url 'allocation:run_allocation' %}" class="btn btn-primary">
                 <i class="bi bi-lightning-fill me-1"></i>Generate Allocation
             </a>
-            <a href="{% url 'allocation:export_allocations_csv' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'allocation:export_allocation_csv' %}" class="btn btn-outline-secondary">
                 <i class="bi bi-file-earmark-csv me-1"></i>Export CSV
             </a>
         </div>
@@ -213,7 +213,7 @@
                        class="btn btn-primary btn-sm">
                         <i class="bi bi-lightning me-1"></i>Generate Allocation
                     </a>
-                    <a href="{% url 'allocation:ufm_history' %}"
+                    <a href="{% url 'allocation:ufm_record_list' %}"
                        class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-clock-history me-1"></i>UFM History
                     </a>

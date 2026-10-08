@@ -1,5 +1,7 @@
 # Render deployment
 
+The current Blueprint uses Render's Free web-service and PostgreSQL plans. Free web services can sleep when idle, and Free PostgreSQL databases expire 30 days after creation. Upgrade the database to a paid plan before its expiry if you need to preserve deployment data; keep a backup before changing plans.
+
 1. Commit these files, push the branch, and merge it into `main`.
 2. In Render, choose **New → Blueprint**, connect the repository, and approve `render.yaml`.
 3. Render creates PostgreSQL and injects `DATABASE_URL`; it also generates `SECRET_KEY` and sets `DEBUG=False`.

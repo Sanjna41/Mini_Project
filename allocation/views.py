@@ -55,6 +55,7 @@ def dashboard(request):
         'classroom_count': Classroom.objects.count(),
         'exam_count': ExamSchedule.objects.count(),
         'allocation_count': DutyAllocation.objects.count(),
+        'ufm_count': UFMRecord.objects.count(),
     }
 
     duty_counts = (
@@ -237,23 +238,6 @@ def ufm_record_list(request):
 
 
 @staff_required
-def ufm_record_create(request):
-    if request.method == 'POST':
-        form = UFMRecordForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'UFM record added.')
-            return redirect('allocation:ufm_record_list')
-    else:
-        form = UFMRecordForm()
-    return render(
-        request,
-        'allocation/exam_schedule_form.html',
-        {'form': form, 'title': 'Add UFM Record'},
-    )
-
-
-@staff_required
 def run_allocation(request):
     if request.method == 'POST':
         try:
@@ -265,7 +249,9 @@ def run_allocation(request):
         except ValidationError as exc:
             messages.error(request, str(exc))
         return redirect('allocation:allocation_result')
-    return redirect('allocation:dashboard')
+    return render(request, 'allocation/run_allocation_confirm.html', {
+        'exam_count': ExamSchedule.objects.count(),
+    })
 
 
 @staff_required

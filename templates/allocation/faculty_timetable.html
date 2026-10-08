@@ -41,10 +41,11 @@
                 </small>
             </div>
             <div class="col-auto">
-                <a href="{% url 'allocation:logout' %}"
-                   class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-box-arrow-right me-1"></i>Logout
-                </a>
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                    {% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>

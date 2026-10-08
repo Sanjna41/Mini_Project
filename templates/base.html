@@ -104,10 +104,7 @@
 
         {# Logo #}
         <div class="sidebar-header px-3 py-3 border-bottom border-secondary d-flex align-items-center justify-content-between">
-            <a href="{% if request.user.is_superuser %}{% url 'allocation:dashboard' %}
-                     {% elif request.user.faculty %}{% url 'allocation:faculty_timetable' %}
-                     {% elif request.user.phdscholar %}{% url 'allocation:phd_timetable' %}
-                     {% else %}{% url 'allocation:login' %}{% endif %}"
+            <a href="{% if request.user.is_staff %}{% url 'allocation:dashboard' %}{% else %}{% url 'login' %}{% endif %}"
                class="navbar-brand text-white fw-bold mb-0">
                 <i class="bi bi-clipboard2-check me-2"></i>ExamDutyManager
             </a>
@@ -120,210 +117,17 @@
         <div class="sidebar-body pt-2">
             <ul class="nav nav-pills flex-column mb-auto px-2">
 
-                {% if request.user.is_superuser %}
-                {# ═══ ADMIN SIDEBAR ═══ #}
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                           href="{% url 'allocation:dashboard' %}"
-                       >
-                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-                    <li class="px-2 mb-1">
-                        <span class="text-secondary sidebar-label">MANAGEMENT</span>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name in 'faculty_list,faculty_edit,faculty_delete' %}active{% endif %}"
-                           href="{% url 'allocation:faculty_list' %}">
-                            <i class="bi bi-people me-2"></i>Faculty
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name in 'phd_list,phd_edit,phd_delete' %}active{% endif %}"
-                           href="{% url 'allocation:phd_list' %}">
-                            <i class="bi bi-mortarboard me-2"></i>PhD Scholars
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name in 'classroom_list,classroom_edit,classroom_delete' %}active{% endif %}"
-                           href="{% url 'allocation:classroom_list' %}">
-                            <i class="bi bi-building me-2"></i>Classrooms
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name in 'exam_schedule_list,exam_schedule_add,exam_schedule_edit' %}active{% endif %}"
-                           href="{% url 'allocation:exam_schedule_list' %}">
-                            <i class="bi bi-calendar-event me-2"></i>Exam Schedule
-                        </a>
-                    </li>
-
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-                    <li class="px-2 mb-1">
-                        <span class="text-secondary sidebar-label">ALLOCATION</span>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'run_allocation' %}active{% endif %}"
-                           href="{% url 'allocation:run_allocation' %}">
-                            <i class="bi bi-lightning me-2"></i>Generate Allocation
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'allocation_table' %}active{% endif %}"
-                           href="{% url 'allocation:allocation_table' %}">
-                            <i class="bi bi-table me-2"></i>Allocation Table
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'seating_plan' %}active{% endif %}"
-                           href="{% url 'allocation:seating_plan' %}">
-                            <i class="bi bi-grid me-2"></i>Seating Plan
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'ufm_history' %}active{% endif %}"
-                           href="{% url 'allocation:ufm_history' %}">
-                            <i class="bi bi-clock-history me-2"></i>UFM History
-                        </a>
-                    </li>
-
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-                    <li class="px-2 mb-1">
-                        <span class="text-secondary sidebar-label">EXPORT</span>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white"
-                           href="{% url 'allocation:export_allocations_csv' %}">
-                            <i class="bi bi-file-earmark-csv me-2"></i>Export CSV
-                        </a>
-                    </li>
-
-                {% elif request.user.faculty %}
-                {# ═══ FACULTY SIDEBAR ═══ #}
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'faculty_timetable' %}active{% endif %}"
-                           href="{% url 'allocation:faculty_timetable' %}">
-                            <i class="bi bi-house me-2"></i>My Dashboard
-                        </a>
-                    </li>
-
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-                    <li class="px-2 mb-1">
-                        <span class="text-secondary sidebar-label">MY INFO</span>
-                    </li>
-
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-person me-1"></i>
-                            {{ request.user.get_full_name|default:request.user.username }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-award me-1"></i>
-                            {{ request.user.faculty.get_designation_display }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-building me-1"></i>
-                            {{ request.user.faculty.department }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-envelope me-1"></i>
-                            {{ request.user.email }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-clipboard-check me-1"></i>
-                            Duty Quota: {{ request.user.faculty.duty_quota }}
-                        </small>
-                    </li>
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"
-                        href="{% url 'allocation:change_password' %}">
-                            <i class="bi bi-key me-2"></i>Change Password
-                        </a>
-                    </li>
-
-                {% elif request.user.phdscholar %}
-                {# ═══ PHD SIDEBAR ═══ #}
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'phd_timetable' %}active{% endif %}"
-                           href="{% url 'allocation:phd_timetable' %}">
-                            <i class="bi bi-house me-2"></i>My Dashboard
-                        </a>
-                    </li>
-
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-                    <li class="px-2 mb-1">
-                        <span class="text-secondary sidebar-label">MY INFO</span>
-                    </li>
-
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-person me-1"></i>
-                            {{ request.user.get_full_name|default:request.user.username }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-mortarboard me-1"></i>
-                            PhD Scholar
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-envelope me-1"></i>
-                            {{ request.user.email }}
-                        </small>
-                    </li>
-                    <li class="nav-item px-2 py-1">
-                        <small class="text-white-50 d-block">
-                            <i class="bi bi-clipboard-check me-1"></i>
-                            Max Duties: {{ request.user.phdscholar.max_duties }}
-                        </small>
-                    </li>
-                    <li class="mt-2"><hr class="dropdown-divider border-secondary my-1"></li>
-
-                    <li class="nav-item">
-                        <a class="nav-link text-white
-                            {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"
-                        href="{% url 'allocation:change_password' %}">
-                            <i class="bi bi-key me-2"></i>Change Password
-                        </a>
-                    </li>
-
+                {% if request.user.is_staff %}
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'allocation:dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name in 'faculty_list,faculty_add,faculty_edit' %}active{% endif %}" href="{% url 'allocation:faculty_list' %}"><i class="bi bi-people me-2"></i>Faculty</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name in 'phd_list,phd_add,phd_edit' %}active{% endif %}" href="{% url 'allocation:phd_list' %}"><i class="bi bi-mortarboard me-2"></i>PhD Scholars</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name in 'classroom_list,classroom_add,classroom_edit' %}active{% endif %}" href="{% url 'allocation:classroom_list' %}"><i class="bi bi-building me-2"></i>Classrooms</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name in 'exam_schedule_list,exam_schedule_add,exam_schedule_edit' %}active{% endif %}" href="{% url 'allocation:exam_schedule_list' %}"><i class="bi bi-calendar-event me-2"></i>Exam Schedule</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name == 'run_allocation' %}active{% endif %}" href="{% url 'allocation:run_allocation' %}"><i class="bi bi-lightning me-2"></i>Generate Allocation</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name == 'allocation_result' %}active{% endif %}" href="{% url 'allocation:allocation_result' %}"><i class="bi bi-table me-2"></i>Allocation Table</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name == 'seating_plan' %}active{% endif %}" href="{% url 'allocation:seating_plan' %}"><i class="bi bi-grid me-2"></i>Seating Plan</a></li>
+                    <li class="nav-item"><a class="nav-link text-white {% if request.resolver_match.url_name in 'ufm_record_list,ufm_record_add' %}active{% endif %}" href="{% url 'allocation:ufm_record_list' %}"><i class="bi bi-clock-history me-2"></i>UFM History</a></li>
+                    <li class="nav-item"><a class="nav-link text-white" href="{% url 'allocation:export_allocation_csv' %}"><i class="bi bi-file-earmark-csv me-2"></i>Export CSV</a></li>
                 {% endif %}
 
             </ul>
@@ -358,10 +162,13 @@
                         <i class="bi bi-person-circle me-1"></i>
                         {{ request.user.get_full_name|default:request.user.username }}
                     </span>
-                    <a href="{% url 'allocation:logout' %}" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-box-arrow-right me-1"></i>
-                        <span class="d-none d-md-inline">Logout</span>
-                    </a>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-box-arrow-right me-1"></i>
+                            <span class="d-none d-md-inline">Logout</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </nav>

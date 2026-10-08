@@ -117,16 +117,9 @@
                                 <td>
                                     <div class="d-flex gap-1">
                                         {# View allocation #}
-                                        <a href="{% url 'allocation:allocation_table' %}?exam_id={{ exam.id }}"
+                                        <a href="{% url 'allocation:allocation_result' %}?exam_id={{ exam.id }}"
                                            class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-table"></i>
-                                        </a>
-                                        {# Resend email #}
-                                        <a href="{% url 'allocation:resend_allocation_emails' exam.id %}"
-                                           class="btn btn-sm btn-outline-primary"
-                                           title="Resend Emails"
-                                           onclick="return confirm('Resend emails for {{ exam.course_name }}?')">
-                                            <i class="bi bi-envelope"></i>
                                         </a>
                                     </div>
                                 </td>

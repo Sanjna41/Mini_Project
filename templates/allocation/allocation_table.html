@@ -27,7 +27,7 @@
     <div class="col-auto d-flex gap-2 flex-wrap">
 
         {# Export CSV #}
-        <a href="{% url 'allocation:export_allocations_csv' %}{% if exam %}?exam_id={{ exam.id }}{% endif %}"
+        <a href="{% url 'allocation:export_allocation_csv' %}{% if exam %}?exam_id={{ exam.id }}{% endif %}"
            class="btn btn-outline-success">
             <i class="bi bi-file-earmark-csv me-1"></i>Export CSV
         </a>
@@ -207,10 +207,6 @@
                         data-bs-dismiss="modal">
                     Cancel
                 </button>
-                <a href="{% url 'allocation:resend_allocation_emails' exam.id %}"
-                   class="btn btn-primary">
-                    <i class="bi bi-envelope me-1"></i>Yes, Send Emails
-                </a>
             </div>
         </div>
     </div>

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Generate Allocation | ExamDutyManager{% endblock %}
+{% block page_title %}Generate Duty Allocation{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+<p>This will create duty assignments for scheduled exams and replace existing generated assignments.</p>
+<p class="text-muted">Exam schedules found: {{ exam_count }}</p>
+<form method="post" action="{% url 'allocation:run_allocation' %}">{% csrf_token %}<div class="d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'allocation:dashboard' %}">Cancel</a><button class="btn btn-primary" type="submit" {% if not exam_count %}disabled{% endif %}>Generate Allocation</button></div></form>
+</div></div></div></div>
+{% endblock %}

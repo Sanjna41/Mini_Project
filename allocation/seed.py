@@ -1,60 +1,29 @@
-from faker import Faker
-from django.contrib.auth.models import User
-from allocation.models import (
-    Classroom,
-    Faculty,
-    PhDScholar,
-    
-)
-fake = Faker("en-IN")
+from allocation.models import Classroom, Faculty, PhDScholar
 
 
 def run():
-
-    # delete old data
-    Faculty.objects.all().delete()
-    PhDScholar.objects.all().delete()
-    Classroom.objects.all().delete()
-    User.objects.filter(username__startswith="faculty").delete()
-    User.objects.filter(username__startswith="phd").delete()
-
-    # create faculty
-    for i in range(10):
-        user = User.objects.create_user(
-            username=f"faculty{i}",
-            password="12345"
+    """Create repeatable local sample records using the current model fields."""
+    for number in range(1, 11):
+        Faculty.objects.get_or_create(
+            email=f'faculty{number}@example.test',
+            defaults={
+                'name': f'Faculty Member {number}',
+                'designation': Faculty.Designation.PROFESSOR,
+                'duty_quota': 5,
+            },
         )
 
-        Faculty.objects.create (
-            user=user,
-            name=fake.name(),
-            email=fake.email(),
-            designation="PROFESSOR",
-            department="CSE",
-            duty_quota=5,
-            is_active=True,
-            must_change_password=True,
-         )
-
-    # create phd scholars
-    for i in range(15):
-        user = User.objects.create_user(
-            username=f"phd{i}",
-            password="12345",
+    for number in range(1, 16):
+        PhDScholar.objects.get_or_create(
+            email=f'phd{number}@example.test',
+            defaults={
+                'name': f'PhD Scholar {number}',
+                'duty_quota': 3,
+            },
         )
 
-        PhDScholar.objects.create(
-            user=user,
-            name=fake.name(),
-            max_duties=3,
-            must_change_password=True,
+    for number in range(1, 6):
+        Classroom.objects.get_or_create(
+            name=f'Room-{number}',
+            defaults={'rows': 6, 'columns': 10},
         )
-
-    # create classrooms
-    for i in range(5):
-        Classroom.objects.create(
-            name=f"Room-{i+1}",
-            capacity=60
-        )
-
-    print("Fake data generated successfully!")

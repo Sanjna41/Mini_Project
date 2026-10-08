@@ -83,10 +83,12 @@
   </div>
 </div>
 
+{{ chart_labels|json_script:"duty-chart-labels" }}
+{{ chart_data|json_script:"duty-chart-data" }}
 <script>
   const ctx = document.getElementById('dutyChart');
-  const labels = {{ chart_labels|safe }};
-  const data = {{ chart_data|safe }};
+  const labels = JSON.parse(document.getElementById('duty-chart-labels').textContent);
+  const data = JSON.parse(document.getElementById('duty-chart-data').textContent);
 
   new Chart(ctx, {
     type: 'bar',

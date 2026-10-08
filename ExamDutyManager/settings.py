@@ -14,7 +14,7 @@ def env_list(name, default=''):
 
 
 DEBUG = env_bool('DEBUG', True)
-SECRET_KEY = os.environ.get('SECRET_KEY', '')
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'django-insecure-local-development-key'
@@ -73,9 +73,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ExamDutyManager.wsgi.application'
 
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+if not DEBUG and not DATABASE_URL:
+    raise RuntimeError('DATABASE_URL must be set when DEBUG is False; production SQLite is not persistent.')
+if not DEBUG and DATABASE_URL.lower().startswith('sqlite:'):
+    raise RuntimeError('Production requires a persistent database; configure PostgreSQL instead of SQLite.')
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{(BASE_DIR / 'db.sqlite3').as_posix()}",
+        default=DATABASE_URL or f"sqlite:///{(BASE_DIR / 'db.sqlite3').as_posix()}",
         conn_max_age=600,
         conn_health_checks=True,
     )
@@ -88,11 +94,10 @@ TIME_ZONE = os.environ.get('TIME_ZONE', 'Asia/Kolkata')
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-STATIC_ROOT = Path(os.environ.get('STATIC_ROOT', BASE_DIR / 'staticfiles'))
+STATIC_URL = '/static/'
+STATIC_ROOT = Path(os.environ.get('STATIC_ROOT') or BASE_DIR / 'staticfiles')
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    BASE_DIR / 'allocation' / 'static',
 ]
 STORAGES = {
     'staticfiles': {
@@ -100,7 +105,7 @@ STORAGES = {
     },
 }
 MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
-MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT') or BASE_DIR / 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -110,12 +115,12 @@ LOGOUT_REDIRECT_URL = 'login'
 
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or '587')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT') or '10')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@examdutymanager.local')
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
     raise RuntimeError('EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.')

@@ -1,4 +1,7 @@
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from .models import (
     Faculty,
@@ -9,6 +12,18 @@ from .models import (
     Section,
     Subject,
 )
+
+
+class StaffAuthenticationForm(AuthenticationForm):
+    """Only staff users can enter the staff-only duty management system."""
+
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        if not user.is_staff:
+            raise ValidationError(
+                'This account is not permitted to access the staff portal.',
+                code='not_staff',
+            )
 
 
 class FacultyForm(forms.ModelForm):
@@ -22,7 +37,7 @@ class FacultyForm(forms.ModelForm):
 
     class Meta:
         model = Faculty
-        fields = ['name', 'email', 'designation', 'duty_quota']
+        fields = ['name', 'email', 'designation', 'duty_quota', 'subject']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,7 +66,7 @@ class PhDScholarForm(forms.ModelForm):
 
     class Meta:
         model = PhDScholar
-        fields = ['name', 'email', 'duty_quota']
+        fields = ['name', 'email', 'duty_quota', 'subject']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,13 +113,27 @@ class ExamScheduleForm(forms.ModelForm):
         }
 
     def save(self, commit=True):
-        exam = super().save(commit=commit)
-        if commit:
-            selected_ids = [int(value) for value in self.data.getlist('sections')]
-            exam.exam_sections.all().delete()
-            for position, section_id in enumerate(selected_ids, start=1):
-                if section_id in {section.id for section in self.cleaned_data['sections']}:
+        exam = super().save(commit=False)
+
+        def save_sections():
+            selected_sections = {
+                section.pk: section for section in self.cleaned_data['sections']
+            }
+            selected_ids = []
+            for value in self.data.getlist('sections'):
+                section_id = int(value)
+                if section_id in selected_sections and section_id not in selected_ids:
+                    selected_ids.append(section_id)
+            with transaction.atomic():
+                exam.exam_sections.all().delete()
+                for position, section_id in enumerate(selected_ids, start=1):
                     exam.exam_sections.create(section_id=section_id, position=position)
+
+        self.save_m2m = save_sections
+        if commit:
+            with transaction.atomic():
+                exam.save()
+                save_sections()
         return exam
 
 
@@ -112,4 +141,10 @@ class UFMRecordForm(forms.ModelForm):
     class Meta:
         model = UFMRecord
         fields = ['faculty', 'phd_scholar', 'exam_schedule', 'count', 'notes']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if bool(cleaned_data.get('faculty')) == bool(cleaned_data.get('phd_scholar')):
+            raise forms.ValidationError('Select exactly one faculty member or PhD scholar.')
+        return cleaned_data
 
