@@ -90,7 +90,7 @@
                         <i class="bi bi-calendar-event"></i>
                     </div>
                 </div>
-                <a href="{% url 'allocation:exam_list' %}"
+                <a href="{% url 'allocation:exam_schedule_list' %}"
                    class="btn btn-sm btn-outline-info mt-2">
                     View All
                 </a>
@@ -156,7 +156,7 @@
             <a href="{% url 'allocation:classroom_list' %}" class="btn btn-outline-warning">
                 <i class="bi bi-building-add me-1"></i>Add Classroom
             </a>
-            <a href="{% url 'allocation:exam_list' %}" class="btn btn-outline-info">
+            <a href="{% url 'allocation:exam_schedule_list' %}" class="btn btn-outline-info">
                 <i class="bi bi-calendar-plus me-1"></i>Add Exam
             </a>
             <a href="{% url 'allocation:run_allocation' %}" class="btn btn-primary">
@@ -188,7 +188,7 @@
                         triggered when expected students exceed total classroom capacity.
                     </li>
                 </ul>
-                <a href="{% url 'allocation:exam_list' %}"
+                <a href="{% url 'allocation:exam_schedule_list' %}"
                    class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-calendar-event me-1"></i>Review Exam Capacity
                 </a>

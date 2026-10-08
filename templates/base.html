@@ -126,7 +126,8 @@
                     <li class="nav-item">
                         <a class="nav-link text-white
                             {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                           href="{% url 'allocation:dashboard' %}">
+                           href="{% url 'allocation:dashboard' %}"
+                       >
                             <i class="bi bi-speedometer2 me-2"></i>Dashboard
                         </a>
                     </li>
@@ -162,8 +163,8 @@
 
                     <li class="nav-item">
                         <a class="nav-link text-white
-                            {% if request.resolver_match.url_name in 'exam_list,exam_edit,exam_delete' %}active{% endif %}"
-                           href="{% url 'allocation:exam_list' %}">
+                            {% if request.resolver_match.url_name in 'exam_schedule_list,exam_schedule_add,exam_schedule_edit' %}active{% endif %}"
+                           href="{% url 'allocation:exam_schedule_list' %}">
                             <i class="bi bi-calendar-event me-2"></i>Exam Schedule
                         </a>
                     </li>
