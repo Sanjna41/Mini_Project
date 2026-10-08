@@ -4,71 +4,111 @@
 {% block page_title %}Seating Plan{% endblock %}
 
 {% block content %}
-
-<div class="row mb-3 align-items-center">
-    <div class="col">
-        <h2 class="h4 fw-bold mb-1">
-            <i class="bi bi-grid me-2 text-primary"></i>Seating Plan
-        </h2>
-        {% if exam %}
-            <p class="text-muted mb-0">{{ exam.course_name }} — {{ exam.date }}</p>
-        {% else %}
-            <p class="text-muted mb-0">All seating allocations.</p>
-        {% endif %}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1">Seating Plan</h2>
+        <p class="text-muted mb-0">Room-wise student seating, filled column by column.</p>
     </div>
+    <a href="{% url 'allocation:seating_search' %}" class="btn btn-outline-primary">Find a roll number</a>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
-                        <th>Exam</th>
-                        <th>Date</th>
-                        <th>Slot</th>
-                        <th>Classroom</th>
-                        <th>Start Roll</th>
-                        <th>End Roll</th>
-                        <th>Seats Used</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for seat in seating_allocations %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td class="fw-semibold">{{ seat.exam.course_name }}</td>
-                        <td>{{ seat.exam.date }}</td>
-                        <td>
-                            {% if seat.exam.time_slot == 'MORNING' %}
-                                <span class="badge bg-warning text-dark">Morning</span>
-                            {% else %}
-                                <span class="badge bg-info text-dark">Evening</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ seat.classroom.name }}</td>
-                        <td><span class="badge bg-primary">{{ seat.start_roll }}</span></td>
-                        <td><span class="badge bg-primary">{{ seat.end_roll }}</span></td>
-                        <td>
-                            <span class="badge bg-secondary rounded-pill">
-                                {{ seat.capacity_used }} seats
-                            </span>
-                        </td>
-                    </tr>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h3 class="h5">Generate or update seating</h3>
+        <form method="post" action="{% url 'allocation:generate_seating' %}">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <label class="form-label" for="exam-select">Exam</label>
+                    <select class="form-select" id="exam-select" name="exam_id" required>
+                        {% for exam in exams %}
+                            <option value="{{ exam.id }}">{{ exam.date }} — {{ exam.get_slot_display }}{% if exam.subject %} — {{ exam.subject }}{% endif %}</option>
+                        {% empty %}
+                            <option value="">Add an exam schedule first</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label" for="fill-order">Seat order</label>
+                    <select class="form-select" id="fill-order" name="fill_order">
+                        <option value="column" selected>Column-wise</option>
+                        <option value="row">Row-wise</option>
+                    </select>
+                </div>
+                <div class="col-lg-5">
+                    <span class="form-label d-block">Classrooms</span>
+                    {% for room in classrooms %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="classrooms" value="{{ room.id }}" id="room-{{ room.id }}" checked>
+                            <label class="form-check-label" for="room-{{ room.id }}">{{ room.name }} ({{ room.capacity }} seats)</label>
+                        </div>
                     {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            <i class="bi bi-grid fs-2 d-block mb-2"></i>
-                            No seating plan found. Run allocation first!
-                        </td>
-                    </tr>
+                        <span class="text-muted">Add classrooms first.</span>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </div>
+            </div>
+            <button class="btn btn-primary mt-3" type="submit" {% if not exams or not classrooms %}disabled{% endif %}>Generate seating</button>
+        </form>
+
+        <hr>
+        <form method="post" enctype="multipart/form-data" action="{% url 'allocation:import_students_csv' %}" class="row g-2 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-8">
+                <label class="form-label" for="student-csv">Import student list (CSV: roll_no, section; optional name)</label>
+                <input class="form-control" id="student-csv" type="file" name="student_csv" accept=".csv" required>
+            </div>
+            <div class="col-md-4"><button class="btn btn-outline-primary">Import students</button></div>
+        </form>
     </div>
 </div>
 
-{% endblock %}
+<h3 class="h5 mb-3">Generated room plans</h3>
+{% for plan in seating_plans %}
+    <section class="card border-0 shadow-sm mb-4 print-plan">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h4 class="h5 mb-0">{{ plan.exam.date }} — {{ plan.exam.get_slot_display }}{% if plan.exam.subject %}: {{ plan.exam.subject }}{% endif %}</h4>
+                {% if plan.rooms %}
+                    <div class="d-flex gap-2 no-print">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'allocation:seating_plan_csv' plan.exam.pk %}">Export CSV</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'allocation:seating_plan_pdf' plan.exam.pk %}">Download PDF</a>
+                    </div>
+                {% endif %}
+            </div>
+            {% for room in plan.rooms %}
+                <div class="mb-4">
+                    <h5 class="h6">{{ room.classroom.name }} <span class="text-muted">({{ room.classroom.rows }} rows × {{ room.classroom.columns }} columns)</span></h5>
+                    <p class="mb-2">
+                        {% for range in room.ranges %}
+                            <span class="badge bg-secondary me-1">{{ range.section.name }}: {{ range.from_roll_no }}–{{ range.to_roll_no }}</span>
+                        {% empty %}
+                            <span class="text-muted">No students assigned.</span>
+                        {% endfor %}
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm text-center align-middle mb-0">
+                            <tbody>
+                                {% for row in room.grid %}
+                                    <tr>
+                                        {% for seat in row %}
+                                            <td style="min-width: 76px;">
+                                                {% if seat %}<strong>{{ seat.roll_no }}</strong><br><small>{{ seat.section.name }} · Seat {{ seat.seat_no }}</small>{% else %}<span class="text-muted">—</span>{% endif %}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">No seating has been generated for this exam yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+{% empty %}
+    <div class="alert alert-info">No exam schedules are available yet.</div>
+{% endfor %}
 
+<style>@media print {.no-print, #sidebar, #mainContent > nav {display:none!important;} #mainContent {width:100%!important;} body {background:#fff!important;} .print-plan {break-inside:avoid;box-shadow:none!important;}}</style>
+{% endblock %}
