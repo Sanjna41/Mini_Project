@@ -1,3 +1,6 @@
+live url - https://exam-duty-manager.onrender.com/
+
+
 # ExamDutyManager
 
 ExamDutyManager is a Django web application to automatically allocate exam invigilation duties with constraints, manage seating plans, and track UFM (Unfair Means) records.
