@@ -12,7 +12,12 @@ from .models import (
     ExamSchedule,
     DutyAllocation,
     UFMRecord,
+    Availability,
+    TimetableEntry,
+    Notification,
 )
+from .email_notifications import queue_duty_assignment
+from .email_notifications import queue_person_email, duty_email_details
 
 PROFESSORS_PER_ROOM = 1
 ASSISTANTS_PER_ROOM = 2
@@ -28,16 +33,27 @@ class StaffCandidate:
     today_duties: int = 0
     occupied_slots: set = field(default_factory=set)
     last_slot_by_date: Dict = field(default_factory=dict)
+    unavailable_intervals: list = field(default_factory=list)
+    class_intervals: list = field(default_factory=list)
 
-    def can_take(self, date, slot) -> bool:
+    def can_take(self, date, slot, start_time=None, end_time=None) -> bool:
+        return self.conflict_reason(date, slot, start_time, end_time) is None
+
+    def conflict_reason(self, date, slot, start_time=None, end_time=None):
         if (date, slot) in self.occupied_slots:
-            return False
+            return 'already has a duty in this shift'
         last = self.last_slot_by_date.get(date)
         if last is not None and last != slot:
-            return False
+            return 'already has a duty in another shift on this date'
         if self.today_duties + self.prev_duties >= self.quota:
-            return False
-        return True
+            return 'has reached the duty quota'
+        if start_time is not None and end_time is not None:
+            if any(d == date and a < end_time and b > start_time for d, a, b in self.unavailable_intervals):
+                return 'is unavailable during the examination time'
+            if any(day == date.weekday() and a < end_time and b > start_time
+                   for day, a, b in self.class_intervals):
+                return 'has a timetable conflict during the examination time'
+        return None
 
     def register(self, date, slot) -> None:
         self.occupied_slots.add((date, slot))
@@ -50,7 +66,7 @@ class StaffCandidate:
         return base * (0.9 + 0.2 * random.random())
 
 
-class AllocationEngine:
+class _AllocationEngineBase:
     def __init__(self) -> None:
         self.professors: Dict[int, StaffCandidate] = {}
         self.assistants: Dict[int, StaffCandidate] = {}
@@ -69,6 +85,8 @@ class AllocationEngine:
                 quota=f.duty_quota,
                 prev_duties=prev,
                 ufm_count=ufm,
+                unavailable_intervals=[(a.date, a.start_time, a.end_time) for a in Availability.objects.filter(faculty=f, is_available=False)],
+                class_intervals=[(t.weekday, t.start_time, t.end_time) for t in TimetableEntry.objects.filter(faculty=f)],
             )
             if f.designation == Faculty.Designation.ASSISTANT_PROFESSOR:
                 self.assistants[f.id] = c
@@ -83,6 +101,8 @@ class AllocationEngine:
                 quota=p.duty_quota,
                 prev_duties=prev,
                 ufm_count=ufm,
+                unavailable_intervals=[(a.date, a.start_time, a.end_time) for a in Availability.objects.filter(phd_scholar=p, is_available=False)],
+                class_intervals=[(t.weekday, t.start_time, t.end_time) for t in TimetableEntry.objects.filter(phd_scholar=p)],
             )
 
         self._prof_ids = list(self.professors.keys())
@@ -121,9 +141,11 @@ class AllocationEngine:
         date,
         slot,
         needed: int,
+        start_time=None,
+        end_time=None,
     ) -> List[StaffCandidate]:
         chosen: List[StaffCandidate] = []
-        available = [cid for cid in ids_order if candidates[cid].can_take(date, slot)]
+        available = [cid for cid in ids_order if candidates[cid].can_take(date, slot, start_time, end_time)]
         if len(available) < needed:
             raise ValidationError(
                 f"Insufficient staff on {date} slot {slot}. "
@@ -146,46 +168,81 @@ class AllocationEngine:
             c.register(date, slot)
         return chosen
 
+
+class CoordinatorAllocationError(ValidationError):
+    def __init__(self, message, schedule_ids):
+        super().__init__(message)
+        self.schedule_ids = list(schedule_ids)
+
+
+class AllocationEngine(_AllocationEngineBase):
     @transaction.atomic
     def allocate(self) -> List[DutyAllocation]:
-        DutyAllocation.objects.all().delete()
-        schedules = list(ExamSchedule.objects.all())
+        previous_allocations = list(DutyAllocation.objects.select_related(
+            'exam_schedule', 'classroom', 'faculty', 'phd_scholar'
+        ))
+        previous_people = {}
+        previous_keys = set()
+        for old in previous_allocations:
+            person = old.faculty or old.phd_scholar
+            if not person:
+                continue
+            person_key = ('faculty', old.faculty_id) if old.faculty_id else ('phd', old.phd_scholar_id)
+            key = (old.exam_schedule_id, old.classroom_id, old.role_type, person_key)
+            previous_keys.add(key)
+            previous_people[key] = (person, old)
+        schedules = list(ExamSchedule.objects.select_related(
+            'subject', 'subject__coordinator'
+        ).order_by('date', 'start_time', 'slot', 'pk'))
         rooms = list(Classroom.objects.all().order_by('name'))
         if not schedules or not rooms:
             return []
+
+        missing = [s for s in schedules if s.subject_id and not s.subject.coordinator_id]
+        if missing:
+            details = '; '.join(f'{s.subject.name} on {s.date} ({s.get_slot_display()})'
+                                for s in missing)
+            raise CoordinatorAllocationError(
+                'Subject coordinator assignment is unresolved for: ' + details +
+                '. Assign a coordinator to each subject before running allocation.',
+                [s.pk for s in missing],
+            )
+
+        DutyAllocation.objects.all().delete()
+        coordinator_by_schedule = {}
+        coordinator_pool_by_schedule = {}
+        # Reserve every coordinator before random room staffing so another
+        # subject cannot consume their slot first.
+        for schedule in schedules:
+            if not schedule.subject_id:
+                continue
+            coordinator = schedule.subject.coordinator
+            pool = (self.assistants if coordinator.designation == Faculty.Designation.ASSISTANT_PROFESSOR
+                    else self.professors)
+            candidate = pool[coordinator.pk]
+            reason = candidate.conflict_reason(
+                schedule.date, schedule.slot, schedule.start_time, schedule.end_time
+            )
+            if reason:
+                raise CoordinatorAllocationError(
+                    f'Subject coordinator {coordinator.name} for {schedule.subject.name} '
+                    f'on {schedule.date} ({schedule.get_slot_display()}) cannot be assigned: {reason}. '
+                    'This schedule remains unresolved; resolve the conflict and run allocation again.',
+                    [schedule.pk],
+                )
+            candidate.register(schedule.date, schedule.slot)
+            coordinator_by_schedule[schedule.pk] = coordinator
+            coordinator_pool_by_schedule[schedule.pk] = pool
 
         created: List[DutyAllocation] = []
 
         for s in schedules:
             date = s.date
             slot = s.slot
+            start_time, end_time = s.start_time, s.end_time
 
-            coordinator = None
-            coordinator_pool = None
-            if s.subject_id:
-                coordinator_candidates = list(
-                    Faculty.objects.filter(subjects=s.subject).order_by('name')
-                )
-                if not coordinator_candidates:
-                    raise ValidationError(
-                        f"No subject coordinator is assigned to {s.subject} "
-                        f"({date}). Add a faculty member to that subject before allocating duties."
-                    )
-                coordinator = next(
-                    (f for f in coordinator_candidates
-                     if (self.assistants if f.designation == Faculty.Designation.ASSISTANT_PROFESSOR
-                         else self.professors)[f.id].can_take(date, slot)),
-                    None,
-                )
-                if coordinator is None:
-                    raise ValidationError(
-                        f"No available subject coordinator for {s.subject} on {date} ({slot})."
-                )
-                if coordinator.designation == Faculty.Designation.ASSISTANT_PROFESSOR:
-                    coordinator_pool = self.assistants
-                else:
-                    coordinator_pool = self.professors
-                coordinator_pool[coordinator.id].register(date, slot)
+            coordinator = coordinator_by_schedule.get(s.pk)
+            coordinator_pool = coordinator_pool_by_schedule.get(s.pk)
 
             for room_index, room in enumerate(rooms):
                 profs = self._weighted_pick(
@@ -193,15 +250,17 @@ class AllocationEngine:
                     PROFESSORS_PER_ROOM - int(
                         room_index == 0 and coordinator_pool is self.professors
                     ),
+                    start_time, end_time,
                 )
                 assts = self._weighted_pick(
                     self.assistants, self._asst_ids, date, slot,
                     ASSISTANTS_PER_ROOM - int(
                         room_index == 0 and coordinator_pool is self.assistants
                     ),
+                    start_time, end_time,
                 )
                 phds = self._weighted_pick(
-                    self.phds, self._phd_ids, date, slot, PHDS_PER_ROOM
+                    self.phds, self._phd_ids, date, slot, PHDS_PER_ROOM, start_time, end_time
                 )
 
                 for p in profs:
@@ -210,12 +269,14 @@ class AllocationEngine:
                             exam_schedule=s,
                             classroom=room,
                             faculty_id=p.id,
+                            subject=s.subject,
                             role_type=DutyAllocation.RoleType.PROFESSOR,
                         )
                     )
                 if room_index == 0 and coordinator_pool is self.professors:
                     created.append(DutyAllocation(
                         exam_schedule=s, classroom=room, faculty_id=coordinator.id,
+                        subject=s.subject, is_subject_coordinator=True,
                         role_type=(DutyAllocation.RoleType.ASSISTANT_PROFESSOR
                                    if coordinator.designation == Faculty.Designation.ASSISTANT_PROFESSOR
                                    else DutyAllocation.RoleType.PROFESSOR),
@@ -223,6 +284,7 @@ class AllocationEngine:
                 if room_index == 0 and coordinator_pool is self.assistants:
                     created.append(DutyAllocation(
                         exam_schedule=s, classroom=room, faculty_id=coordinator.id,
+                        subject=s.subject, is_subject_coordinator=True,
                         role_type=DutyAllocation.RoleType.ASSISTANT_PROFESSOR,
                     ))
                 for a in assts:
@@ -231,6 +293,7 @@ class AllocationEngine:
                             exam_schedule=s,
                             classroom=room,
                             faculty_id=a.id,
+                            subject=s.subject,
                             role_type=DutyAllocation.RoleType.ASSISTANT_PROFESSOR,
                         )
                     )
@@ -240,15 +303,61 @@ class AllocationEngine:
                             exam_schedule=s,
                             classroom=room,
                             phd_scholar_id=ph.id,
+                            subject=s.subject,
                             role_type=DutyAllocation.RoleType.PHD_SCHOLAR,
                         )
                     )
 
         DutyAllocation.objects.bulk_create(created)
+        for schedule in schedules:
+            schedule.coordinator_status = (
+                ExamSchedule.CoordinatorStatus.ASSIGNED if schedule.subject_id
+                else ExamSchedule.CoordinatorStatus.NOT_REQUIRED
+            )
+            schedule.coordinator_note = ''
+        ExamSchedule.objects.bulk_update(schedules, ['coordinator_status', 'coordinator_note'])
+        current_keys = set()
+        by_duty_position = {}
+        for allocation in created:
+            person = allocation.faculty or allocation.phd_scholar
+            person_key = ('faculty', allocation.faculty_id) if allocation.faculty_id else ('phd', allocation.phd_scholar_id)
+            key = (allocation.exam_schedule_id, allocation.classroom_id, allocation.role_type, person_key)
+            current_keys.add(key)
+            by_duty_position.setdefault(key[:3], []).append(person)
+            if person and person.user_id:
+                Notification.objects.create(
+                    recipient_id=person.user_id,
+                    message=(f'New exam duty assigned: {allocation.exam_schedule.date} '
+                             f'{allocation.exam_schedule.start_time}-{allocation.exam_schedule.end_time}, '
+                             f'room {allocation.classroom.name} ({allocation.get_role_type_display()}).'),
+                )
+            if person:
+                queue_duty_assignment(person, allocation)
+        for key in previous_keys - current_keys:
+            person, old = previous_people[key]
+            replacements = by_duty_position.get(key[:3], [])
+            details = duty_email_details(old)
+            if replacements:
+                details.append(('Updated assignment', 'This classroom duty has been reassigned to ' + ', '.join(str(p) for p in replacements) + '.'))
+                intro = 'Your examination duty assignment has changed. Review the updated information below.'
+            else:
+                details.append(('Updated assignment', 'This duty is no longer assigned to you.'))
+                intro = 'Your examination duty assignment has changed.'
+            queue_person_email(person,
+                notification_type='DUTY_ASSIGNMENT', template_key='duty_assignment',
+                subject=f'Exam duty assignment updated · {old.exam_schedule.date:%d %b %Y}',
+                details=details, idempotency_key=f'duty-change:{old.pk}', intro=intro)
         return created
 
 
 def allocate_all_duties(clear_existing: bool = True) -> List[DutyAllocation]:
     engine = AllocationEngine()
-    return engine.allocate()
+    try:
+        return engine.allocate()
+    except CoordinatorAllocationError as exc:
+        ExamSchedule.objects.filter(pk__in=exc.schedule_ids).update(
+            coordinator_status=ExamSchedule.CoordinatorStatus.UNRESOLVED,
+            coordinator_note=str(exc),
+        )
+        raise
 

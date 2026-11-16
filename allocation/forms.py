@@ -11,6 +11,7 @@ from .models import (
     UFMRecord,
     Section,
     Subject,
+    Availability, ReplacementRequest, ExamSession,
 )
 
 
@@ -19,7 +20,7 @@ class StaffAuthenticationForm(AuthenticationForm):
 
     def confirm_login_allowed(self, user):
         super().confirm_login_allowed(user)
-        if not user.is_staff:
+        if not user.is_staff and not (hasattr(user, 'faculty_profile') or hasattr(user, 'phd_profile')):
             raise ValidationError(
                 'This account is not permitted to access the staff portal.',
                 code='not_staff',
@@ -27,17 +28,18 @@ class StaffAuthenticationForm(AuthenticationForm):
 
 
 class FacultyForm(forms.ModelForm):
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     subject = forms.ModelChoiceField(
         queryset=Subject.objects.order_by('name'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
-        help_text='Choose the subject this faculty member coordinates.',
-        label='Subject',
+        help_text='Subjects this faculty member is qualified to teach or invigilate.',
+        label='Subject expertise',
     )
 
     class Meta:
         model = Faculty
-        fields = ['name', 'email', 'designation', 'duty_quota', 'subject']
+        fields = ['name', 'employee_id', 'email', 'department', 'contact', 'designation', 'duty_quota', 'subject']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,6 +59,7 @@ class FacultyForm(forms.ModelForm):
 
 
 class PhDScholarForm(forms.ModelForm):
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     subject = forms.ModelChoiceField(
         queryset=Subject.objects.order_by('name'),
         required=False,
@@ -66,7 +69,7 @@ class PhDScholarForm(forms.ModelForm):
 
     class Meta:
         model = PhDScholar
-        fields = ['name', 'email', 'duty_quota', 'subject']
+        fields = ['name', 'scholar_id', 'email', 'department', 'academic_year', 'contact', 'duty_quota', 'subject']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -98,6 +101,38 @@ class ClassroomForm(forms.ModelForm):
         return cleaned_data
 
 
+class SubjectForm(forms.ModelForm):
+    class Meta:
+        model = Subject
+        fields = ['name', 'coordinator']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'coordinator': forms.Select(attrs={'class': 'form-select'}),
+        }
+        help_texts = {
+            'coordinator': 'This faculty member must receive duty for this subject. Missing or conflicting assignments are reported during allocation.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['coordinator'].queryset = Faculty.objects.order_by('name')
+        self.fields['coordinator'].required = False
+
+    def save(self, commit=True):
+        previous = self.instance.coordinator_id
+        subject = super().save(commit=commit)
+        changed = not self.instance.pk or previous != subject.coordinator_id
+        if commit and changed:
+            status = (ExamSchedule.CoordinatorStatus.PENDING if subject.coordinator_id
+                      else ExamSchedule.CoordinatorStatus.UNRESOLVED)
+            note = ('Coordinator changed; rerun duty allocation to verify availability and assign the duty.'
+                    if subject.coordinator_id else 'No faculty coordinator is configured for this subject.')
+            ExamSchedule.objects.filter(subject=subject).update(
+                coordinator_status=status, coordinator_note=note,
+            )
+        return subject
+
+
 class ExamScheduleForm(forms.ModelForm):
     sections = forms.ModelMultipleChoiceField(
         queryset=Section.objects.all().order_by('name'), required=False,
@@ -105,15 +140,19 @@ class ExamScheduleForm(forms.ModelForm):
     )
     class Meta:
         model = ExamSchedule
-        fields = ['date', 'slot', 'start_time', 'end_time', 'subject', 'sections']
+        fields = ['examination_type', 'date', 'slot', 'start_time', 'end_time', 'reporting_time', 'instructions', 'subject', 'session', 'sections']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
+            'reporting_time': forms.TimeInput(attrs={'type': 'time'}),
         }
 
     def save(self, commit=True):
         exam = super().save(commit=False)
+        needs_coordinator_review = (not self.instance.pk or bool(
+            {'date', 'slot', 'start_time', 'end_time', 'subject'} & set(self.changed_data)
+        ))
 
         def save_sections():
             selected_sections = {
@@ -132,6 +171,11 @@ class ExamScheduleForm(forms.ModelForm):
         self.save_m2m = save_sections
         if commit:
             with transaction.atomic():
+                if needs_coordinator_review:
+                    exam.coordinator_status = (ExamSchedule.CoordinatorStatus.PENDING
+                        if exam.subject_id else ExamSchedule.CoordinatorStatus.NOT_REQUIRED)
+                    exam.coordinator_note = ('Schedule changed; rerun duty allocation to verify and assign the subject coordinator.'
+                        if exam.subject_id else '')
                 exam.save()
                 save_sections()
         return exam
@@ -147,4 +191,57 @@ class UFMRecordForm(forms.ModelForm):
         if bool(cleaned_data.get('faculty')) == bool(cleaned_data.get('phd_scholar')):
             raise forms.ValidationError('Select exactly one faculty member or PhD scholar.')
         return cleaned_data
+
+
+class AvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = Availability
+        fields = ['date', 'start_time', 'end_time', 'is_available', 'note']
+        widgets = {'date': forms.DateInput(attrs={'type': 'date'}),
+                   'start_time': forms.TimeInput(attrs={'type': 'time'}),
+                   'end_time': forms.TimeInput(attrs={'type': 'time'})}
+
+    def clean(self):
+        data = super().clean()
+        if data.get('start_time') and data.get('end_time') and data['start_time'] >= data['end_time']:
+            raise ValidationError('End time must be after start time.')
+        return data
+
+
+class ReplacementRequestForm(forms.ModelForm):
+    class Meta:
+        model = ReplacementRequest
+        fields = ['target_faculty', 'target_phd_scholar']
+
+    def clean(self):
+        data = super().clean()
+        if bool(data.get('target_faculty')) == bool(data.get('target_phd_scholar')):
+            raise ValidationError('Choose exactly one replacement person.')
+        return data
+
+
+class ExamSessionForm(forms.ModelForm):
+    class Meta:
+        model = ExamSession
+        fields = ['name', 'starts_on', 'ends_on']
+        widgets = {'starts_on': forms.DateInput(attrs={'type': 'date'}), 'ends_on': forms.DateInput(attrs={'type': 'date'})}
+
+
+class AnnouncementForm(forms.Form):
+    message = forms.CharField(min_length=5, max_length=1000, widget=forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}))
+    faculty = forms.ModelMultipleChoiceField(queryset=Faculty.objects.none(), required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 8}))
+    phd_scholars = forms.ModelMultipleChoiceField(queryset=PhDScholar.objects.none(), required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 8}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['faculty'].queryset = Faculty.objects.order_by('name')
+        self.fields['phd_scholars'].queryset = PhDScholar.objects.order_by('name')
+
+    def clean(self):
+        data = super().clean()
+        if not data.get('faculty') and not data.get('phd_scholars'):
+            raise ValidationError('Select at least one faculty member or PhD scholar.')
+        return data
 

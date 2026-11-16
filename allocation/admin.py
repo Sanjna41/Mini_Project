@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Classroom, DutyAllocation, ExamSchedule, Faculty, PhDScholar, UFMRecord, Section, Seating, SeatingAllotment, Student, Subject
+from .models import Classroom, DutyAllocation, ExamSchedule, Faculty, PhDScholar, UFMRecord, Section, Seating, SeatingAllotment, Student, Subject, ExamSession, Availability, TimetableEntry, ReplacementRequest, Notification, SessionSeating, SessionSeatingAllotment, StudentSubjectRegistration, ImportBatch, EmailNotification
 
 
 @admin.register(Faculty)
@@ -49,9 +49,29 @@ class UFMRecordAdmin(admin.ModelAdmin):
     search_fields = ('faculty__name', 'phd_scholar__name')
 
 
-admin.site.register(Subject)
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'coordinator')
+    search_fields = ('name', 'coordinator__name', 'coordinator__email')
 admin.site.register(Section)
 admin.site.register(Student)
 admin.site.register(Seating)
 admin.site.register(SeatingAllotment)
+admin.site.register(ExamSession)
+admin.site.register(Availability)
+admin.site.register(TimetableEntry)
+admin.site.register(ReplacementRequest)
+admin.site.register(Notification)
+admin.site.register(SessionSeating)
+admin.site.register(SessionSeatingAllotment)
+admin.site.register(StudentSubjectRegistration)
+admin.site.register(ImportBatch)
+
+
+@admin.register(EmailNotification)
+class EmailNotificationAdmin(admin.ModelAdmin):
+    list_display = ('recipient_email', 'subject', 'notification_type', 'status', 'attempt_count', 'created_at', 'sent_at')
+    list_filter = ('status', 'notification_type', 'created_at')
+    search_fields = ('recipient_email', 'recipient_name', 'subject')
+    readonly_fields = ('recipient', 'recipient_email', 'recipient_name', 'subject', 'notification_type', 'status', 'idempotency_key', 'text_body', 'html_body', 'attempt_count', 'last_error', 'created_at', 'last_attempt_at', 'sent_at')
 

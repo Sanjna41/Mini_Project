@@ -62,7 +62,11 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h3 class="h5 mb-1">Common examination session plan</h3><p class="text-muted mb-0">Generate one room plan for all subjects assigned to a session.</p></div><a class="btn btn-outline-primary" href="{% url 'allocation:exam_session_add' %}">Add session</a></div>
+{% for session in sessions %}<form method="post" action="{% url 'allocation:generate_session_seating' %}" class="border-top mt-3 pt-3">{% csrf_token %}<input type="hidden" name="session_id" value="{{ session.pk }}"><div class="row align-items-end g-2"><div class="col-md-3"><strong>{{ session.name }}</strong><div class="small text-muted">{{ session.exam_schedules.count }} exam schedules</div></div><div class="col-md-2"><select class="form-select form-select-sm" name="fill_order"><option value="column">Column-wise</option><option value="row">Row-wise</option></select></div><div class="col-md-5">{% for room in classrooms %}<label class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="classrooms" value="{{ room.pk }}" checked><span class="form-check-label">{{ room.name }}</span></label>{% endfor %}</div><div class="col-md-2"><button class="btn btn-sm btn-primary">Generate / regenerate</button></div></div></form>{% empty %}<p class="text-muted mt-3 mb-0">Create a session, then attach exam schedules to it.</p>{% endfor %}</div></div>
+
 <h3 class="h5 mb-3">Generated room plans</h3>
+{% for plan in session_plans %}{% if plan.rooms %}<section class="card border-0 shadow-sm mb-4 print-plan"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-3"><h4 class="h5 mb-0">{{ plan.session.name }} · Common session plan</h4><div class="no-print"><a class="btn btn-sm btn-outline-primary" href="{% url 'allocation:session_seating_csv' plan.session.pk %}">Export CSV</a> <a class="btn btn-sm btn-outline-secondary" href="{% url 'allocation:session_seating_pdf' plan.session.pk %}">Download PDF</a><button class="btn btn-sm btn-outline-dark" onclick="window.print()">Print</button></div></div>{% for room in plan.rooms %}<h5 class="h6">{{ room.classroom.name }}</h5><div class="table-responsive mb-4"><table class="table table-bordered table-sm text-center align-middle"><tbody>{% for row in room.grid %}<tr>{% for seat in row %}<td style="min-width:76px">{% if seat %}<strong>{{ seat.student.roll_no }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endfor %}</div></section>{% endif %}{% endfor %}
 {% for plan in seating_plans %}
     <section class="card border-0 shadow-sm mb-4 print-plan">
         <div class="card-body">
@@ -92,7 +96,7 @@
                                     <tr>
                                         {% for seat in row %}
                                             <td style="min-width: 76px;">
-                                                {% if seat %}<strong>{{ seat.roll_no }}</strong><br><small>{{ seat.section.name }} · Seat {{ seat.seat_no }}</small>{% else %}<span class="text-muted">—</span>{% endif %}
+                                                {% if seat %}<strong>{{ seat.roll_no }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}
                                             </td>
                                         {% endfor %}
                                     </tr>

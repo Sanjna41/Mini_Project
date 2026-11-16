@@ -145,6 +145,9 @@ class Command(BaseCommand):
                 defaults={"name": name, "designation": designation, "duty_quota": 10},
             )
             faculty.subjects.set([subjects[subject_name]] if subject_name else [])
+            if subject_name:
+                subjects[subject_name].coordinator = faculty
+                subjects[subject_name].save(update_fields=['coordinator'])
 
         for index in range(1, 15):
             scholar, _ = PhDScholar.objects.update_or_create(

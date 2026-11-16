@@ -15,8 +15,11 @@
                 <thead class="table-light">
                     <tr>
                         <th>Date</th>
+                        <th>Examination Type</th>
                         <th>Slot</th>
                         <th>Time</th>
+                        <th>Subject</th>
+                        <th>Coordinator status</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -24,8 +27,11 @@
                     {% for e in exam_list %}
                     <tr>
                         <td>{{ e.date }}</td>
+                        <td>{{ e.get_examination_type_display }}</td>
                         <td>{{ e.get_slot_display }}</td>
                         <td>{{ e.start_time }} - {{ e.end_time }}</td>
+                        <td>{{ e.subject.name|default:'—' }}{% if e.subject and e.subject.coordinator %}<div class="small text-muted">{{ e.subject.coordinator.name }}</div>{% endif %}</td>
+                        <td><span class="badge {% if e.coordinator_status == 'ASSIGNED' %}text-bg-success{% elif e.coordinator_status == 'UNRESOLVED' %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ e.get_coordinator_status_display }}</span>{% if e.coordinator_note %}<div class="small text-muted">{{ e.coordinator_note }}</div>{% endif %}</td>
                         <td class="text-end">
                             <a href="{% url 'allocation:exam_schedule_edit' e.pk %}" class="btn btn-sm btn-outline-secondary">
                                 Edit
@@ -34,7 +40,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
+                        <td colspan="7" class="text-center text-muted py-4">
                             No exam schedules added yet.
                         </td>
                     </tr>

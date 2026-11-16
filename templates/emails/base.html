@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#172033">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f1f5f9;padding:24px 10px"><tr><td align="center">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#fff;border-radius:12px;overflow:hidden">
+<tr><td style="background:#16324f;color:#fff;padding:22px 26px"><div style="font-size:12px;text-transform:uppercase;letter-spacing:1px">{{ institute_name }}</div><div style="font-size:21px;font-weight:700;margin-top:8px">Examination Duty Management</div></td></tr>
+<tr><td style="padding:26px"><p style="margin-top:0">Hello {{ recipient_name }},</p><h1 style="font-size:20px;line-height:1.35;color:#16324f">{{ heading }}</h1>{% if intro %}<p style="font-size:15px;line-height:1.6">{{ intro }}</p>{% endif %}{% block email_content %}{% endblock %}<p style="font-size:13px;line-height:1.5;color:#526174;margin-top:24px">This is an automated message from {{ institute_name }}. Please contact the examination office if you need assistance.</p></td></tr>
+<tr><td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:15px 26px;color:#64748b;font-size:12px">{{ institute_name }} · Examination Office</td></tr>
+</table></td></tr></table></body></html>

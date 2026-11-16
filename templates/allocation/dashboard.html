@@ -5,6 +5,18 @@
 
 {% block content %}
 
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Pending replacement requests</div><div class="fs-3 fw-bold">{{ pending_replacements }}</div></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Unavailable availability entries</div><div class="fs-3 fw-bold">{{ unavailable_count }}</div><a href="{% url 'allocation:availability_admin' %}" class="small">Review availability</a></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Failed email notifications</div><div class="fs-3 fw-bold">{{ email_failed_count }}</div><a href="{% url 'allocation:email_management' %}" class="small">Review delivery history</a></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><div class="text-muted small">Profiles missing email addresses</div><div class="fs-3 fw-bold">{{ missing_email_count }}</div><span class="small text-muted">Duty email notices are skipped for these profiles.</span></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header">Recent successful replacements</div><div class="list-group list-group-flush">{% for item in recent_replacements %}<div class="list-group-item"><strong>{{ item.replaced_faculty|default:item.replaced_phd_scholar }}</strong> → <strong>{{ item.target_faculty|default:item.target_phd_scholar }}</strong><div class="small text-muted">{{ item.allocation.exam_schedule.date }} · {{ item.allocation.classroom.name }}</div></div>{% empty %}<div class="list-group-item text-muted">No completed replacements.</div>{% endfor %}</div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header">Admin notifications</div><div class="list-group list-group-flush">{% for notice in notifications %}<div class="list-group-item small">{{ notice.message }}<div class="text-muted">{{ notice.created_at }}</div></div>{% empty %}<div class="list-group-item text-muted">No notifications.</div>{% endfor %}</div></div></div>
+</div>
+
 {# ── Welcome ── #}
 <div class="row mb-4">
     <div class="col">

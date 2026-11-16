@@ -87,7 +87,12 @@ DATABASES = {
     )
 }
 
-AUTH_PASSWORD_VALIDATORS: list[dict] = []
+AUTH_PASSWORD_VALIDATORS: list[dict] = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = os.environ.get('TIME_ZONE', 'Asia/Kolkata')
@@ -101,7 +106,8 @@ STATICFILES_DIRS = [
 ]
 STORAGES = {
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': ('django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG
+                    else 'whitenoise.storage.CompressedManifestStaticFilesStorage'),
     },
 }
 MEDIA_URL = os.environ.get('MEDIA_URL', '/media/')
@@ -122,6 +128,11 @@ EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
 EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', False)
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT') or '10')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@examdutymanager.local')
+INSTITUTE_NAME = os.environ.get('INSTITUTE_NAME', 'Maulana Azad National Institute of Technology Bhopal')
+EXAM_DUTY_DEPARTMENT = os.environ.get('EXAM_DUTY_DEPARTMENT', 'Department of Computer Science & Engineering')
+EXAM_DUTY_EXAMINATION_NAME = os.environ.get('EXAM_DUTY_EXAMINATION_NAME', '')
+EXAM_DUTY_REFERENCE = os.environ.get('EXAM_DUTY_REFERENCE', '')
+EXAM_DUTY_DEFAULT_NOTE = os.environ.get('EXAM_DUTY_DEFAULT_NOTE', '')
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
     raise RuntimeError('EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.')
 

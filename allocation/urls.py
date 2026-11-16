@@ -6,10 +6,24 @@ app_name = 'allocation'
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('my-dashboard/', views.my_dashboard, name='my_dashboard'),
+    path('accounts/password/change/', views.ProfilePasswordChangeView.as_view(), name='password_change'),
+    path('availability/', views.availability_manage, name='availability'),
+    path('availability/all/', views.availability_admin, name='availability_admin'),
+    path('announcements/add/', views.announcement_create, name='announcement_add'),
+    path('emails/', views.email_management, name='email_management'),
+    path('emails/<int:notification_id>/retry/', views.email_retry, name='email_retry'),
+    path('imports/', views.data_import, name='data_import'),
+    path('imports/<int:batch_id>/', views.data_import, name='data_import_batch'),
+    path('duties/<int:allocation_id>/replacement/', views.replacement_request, name='replacement_request'),
+    path('replacement/<int:request_id>/<str:action>/', views.replacement_respond, name='replacement_respond'),
 
     path('faculty/', views.faculty_list, name='faculty_list'),
     path('faculty/add/', views.faculty_create, name='faculty_add'),
     path('faculty/<int:pk>/edit/', views.faculty_edit, name='faculty_edit'),
+    path('subjects/', views.subject_list, name='subject_list'),
+    path('subjects/add/', views.subject_create, name='subject_add'),
+    path('subjects/<int:pk>/edit/', views.subject_create, name='subject_edit'),
 
     path('phd/', views.phd_list, name='phd_list'),
     path('phd/add/', views.phd_create, name='phd_add'),
@@ -28,6 +42,10 @@ urlpatterns = [
 
     path('seating/', views.seating_plan, name='seating_plan'),
     path('seating/generate/', views.generate_seating, name='generate_seating'),
+    path('seating/sessions/add/', views.exam_session_create, name='exam_session_add'),
+    path('seating/sessions/generate/', views.generate_session_seating, name='generate_session_seating'),
+    path('seating/sessions/<int:session_id>/export/csv/', views.export_session_seating_csv, name='session_seating_csv'),
+    path('seating/sessions/<int:session_id>/export/pdf/', views.export_session_seating_pdf, name='session_seating_pdf'),
     path('seating/search/', views.seating_search, name='seating_search'),
     path('seating/export/', views.export_seating_csv, name='export_seating_csv'),
     path('seating/<int:exam_id>/export/csv/', views.export_seating_plan_csv, name='seating_plan_csv'),
@@ -39,5 +57,7 @@ urlpatterns = [
     path('allocation/result/', views.allocation_result, name='allocation_result'),
     path('allocation/export/', views.export_allocation_csv, name='export_allocation_csv'),
     path('allocation/order/pdf/', views.duty_order_pdf, name='duty_order_pdf'),
+    path('allocation/order/slip/pdf/', views.duty_slip_pdf, name='duty_slip_pdf'),
+    path('allocation/order/faculty/pdf/', views.faculty_duty_details_pdf, name='faculty_duty_details_pdf'),
 ]
 

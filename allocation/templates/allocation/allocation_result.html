@@ -29,14 +29,77 @@
                   </select>
                     <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
                 </form>
-                <a href="{% url 'allocation:duty_order_pdf' %}" class="btn btn-sm btn-outline-secondary">
-                    Download Duty Order (PDF)
-                </a>
                 <a href="{% url 'allocation:export_allocation_csv' %}" class="btn btn-sm btn-outline-secondary">
                     Export to CSV
                 </a>
             </div>
         </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <h6 class="mb-3">Official examination duty charts</h6>
+            <div class="row g-2 align-items-end">
+                <div class="col-12 d-flex flex-wrap gap-2 mb-2">
+                    <span class="small text-muted align-self-center">Mid Semester:</span>
+                    <a class="btn btn-sm btn-outline-secondary" target="_blank" href="{% url 'allocation:duty_order_pdf' %}?type=MID&amp;preview=1">Preview PDF</a>
+                    <a class="btn btn-sm btn-primary" href="{% url 'allocation:duty_order_pdf' %}?type=MID">Download PDF</a>
+                    <span class="small text-muted align-self-center ms-3">End Semester:</span>
+                    <a class="btn btn-sm btn-outline-secondary" target="_blank" href="{% url 'allocation:duty_order_pdf' %}?type=END&amp;preview=1">Preview PDF</a>
+                    <a class="btn btn-sm btn-primary" href="{% url 'allocation:duty_order_pdf' %}?type=END">Download PDF</a>
+                </div>
+                <div class="col-md-4"><label class="form-label small" for="order-date">Date-wise order</label>
+                    <form method="get" action="{% url 'allocation:duty_order_pdf' %}" class="d-flex gap-2">
+                        <select class="form-select form-select-sm" name="type" aria-label="Examination type"><option value="MID">Mid</option><option value="END" selected>End</option></select>
+                        <input id="order-date" class="form-control form-control-sm" type="date" name="date" required>
+                        <button class="btn btn-sm btn-outline-primary text-nowrap">Download</button>
+                    </form>
+                </div>
+                <div class="col-md-4"><label class="form-label small" for="order-session">Examination session-wise order</label>
+                    <form method="get" action="{% url 'allocation:duty_order_pdf' %}" class="d-flex gap-2">
+                        <select class="form-select form-select-sm" name="type" aria-label="Examination type"><option value="MID">Mid</option><option value="END" selected>End</option></select>
+                        <select id="order-session" class="form-select form-select-sm" name="session" required>
+                            <option value="">Choose examination</option>{% for session in exam_sessions %}<option value="{{ session.pk }}">{{ session.name }}</option>{% endfor %}
+                        </select><button class="btn btn-sm btn-outline-primary">Download</button>
+                    </form>
+                </div>
+                <div class="col-md-4"><label class="form-label small" for="order-slot">Shift-wise order</label>
+                    <form method="get" action="{% url 'allocation:duty_order_pdf' %}" class="d-flex gap-2">
+                        <select class="form-select form-select-sm" name="type" aria-label="Examination type"><option value="MID">Mid</option><option value="END" selected>End</option></select>
+                        <select id="order-slot" class="form-select form-select-sm" name="slot" required>
+                            <option value="">Choose shift</option><option value="MORNING">Morning</option><option value="EVENING">Evening</option>
+                        </select><button class="btn btn-sm btn-outline-primary">Download</button>
+                    </form>
+                </div>
+                <div class="col-md-6"><label class="form-label small" for="faculty-details">Individual Faculty Duty Details</label>
+                    <form method="get" action="{% url 'allocation:faculty_duty_details_pdf' %}" class="d-flex gap-2">
+                        <select id="faculty-details" class="form-select form-select-sm" name="faculty_id" required>
+                            <option value="">Select faculty</option>{% for faculty in faculty_profiles %}<option value="{{ faculty.pk }}">{{ faculty.name }} - {{ faculty.get_designation_display }}</option>{% endfor %}
+                        </select>
+                        <button class="btn btn-sm btn-outline-secondary" name="preview" value="1" formtarget="_blank">Preview</button>
+                        <button class="btn btn-sm btn-outline-primary">Download</button>
+                    </form>
+                </div>
+                <div class="col-md-3"><label class="form-label small" for="faculty-slip">Individual faculty duty slip</label>
+                    <form method="get" action="{% url 'allocation:duty_slip_pdf' %}" class="d-flex gap-2">
+                        <input type="hidden" name="person_type" value="faculty">
+                        <select id="faculty-slip" class="form-select form-select-sm" name="allocation" required>
+                            <option value="">Select assignment</option>
+                            {% for a in duty_slip_allocations %}{% if a.faculty %}<option value="{{ a.pk }}">{{ a.faculty.name }} · {{ a.exam_schedule.date }} · {{ a.classroom.name }}</option>{% endif %}{% endfor %}
+                        </select><button class="btn btn-sm btn-outline-primary">PDF</button>
+                    </form>
+                </div>
+                <div class="col-md-3"><label class="form-label small" for="phd-slip">PhD scholar duty slip</label>
+                    <form method="get" action="{% url 'allocation:duty_slip_pdf' %}" class="d-flex gap-2">
+                        <input type="hidden" name="person_type" value="phd">
+                        <select id="phd-slip" class="form-select form-select-sm" name="allocation" required>
+                            <option value="">Select assignment</option>
+                            {% for a in duty_slip_allocations %}{% if a.phd_scholar %}<option value="{{ a.pk }}">{{ a.phd_scholar.name }} · {{ a.exam_schedule.date }} · {{ a.classroom.name }}</option>{% endif %}{% endfor %}
+                        </select><button class="btn btn-sm btn-outline-primary">PDF</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <div class="table-responsive">
             <table class="table table-hover table-sm align-middle">

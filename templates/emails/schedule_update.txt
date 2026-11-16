@@ -1,0 +1,9 @@
+{{ institute_name }}
+Examination schedule update
+
+Hello {{ recipient_name }},
+{{ intro }}
+{% for label,value in details %}{{ label }}: {{ value }}
+{% endfor %}
+Regards,
+{{ institute_name }} Examination Office

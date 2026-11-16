@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Availability overview{% endblock %}
+{% block page_title %}Availability overview{% endblock %}
+{% block content %}<div class="card border-0 shadow-sm"><div class="card-header">Faculty and PhD availability</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Person</th><th>Category</th><th>Date</th><th>Time</th><th>Status</th><th>Note</th></tr></thead><tbody>{% for row in records %}<tr><td>{% firstof row.faculty.name row.phd_scholar.name %}</td><td>{% if row.faculty %}Faculty{% else %}PhD Scholar{% endif %}</td><td>{{ row.date }}</td><td>{{ row.start_time }}–{{ row.end_time }}</td><td>{% if row.is_available %}Available{% else %}Unavailable{% endif %}</td><td>{{ row.note }}</td></tr>{% empty %}<tr><td colspan="6" class="text-muted">No availability records have been entered.</td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}

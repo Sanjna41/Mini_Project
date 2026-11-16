@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Add Examination Session{% endblock %}
+{% block page_title %}Examination Session{% endblock %}
+{% block content %}<div class="card border-0 shadow-sm"><div class="card-body"><h1 class="h4">Add examination session</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Save session</button> <a class="btn btn-outline-secondary" href="{% url 'allocation:seating_plan' %}">Cancel</a></form></div></div>{% endblock %}

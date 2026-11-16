@@ -23,6 +23,10 @@
         </div>
         <hr class="border-secondary">
         <ul class="nav nav-pills flex-column mb-auto">
+            {% if not request.user.is_staff %}
+            <li><a href="{% url 'allocation:my_dashboard' %}" class="nav-link text-white">My Dashboard</a></li>
+            <li><a href="{% url 'allocation:availability' %}" class="nav-link text-white">My Availability</a></li>
+            {% else %}
             <li class="nav-item">
                 <a href="{% url 'allocation:dashboard' %}"
                    class="nav-link text-white {% if request.resolver_match.url_name == 'dashboard' %}active bg-primary{% endif %}">
@@ -34,6 +38,9 @@
                    class="nav-link text-white {% if 'faculty' in request.resolver_match.url_name %}active bg-primary{% endif %}">
                     Faculty
                 </a>
+            </li>
+            <li>
+                <a href="{% url 'allocation:subject_list' %}" class="nav-link text-white {% if 'subject' in request.resolver_match.url_name %}active bg-primary{% endif %}">Subjects &amp; Coordinators</a>
             </li>
             <li>
                 <a href="{% url 'allocation:phd_list' %}"
@@ -71,6 +78,11 @@
                     UFM History
                 </a>
             </li>
+            <li><a href="{% url 'allocation:data_import' %}" class="nav-link text-white">Bulk Import</a></li>
+            <li><a href="{% url 'allocation:availability_admin' %}" class="nav-link text-white">Availability</a></li>
+            <li><a href="{% url 'allocation:email_management' %}" class="nav-link text-white">Email delivery</a></li>
+            <li><a href="{% url 'allocation:announcement_add' %}" class="nav-link text-white">Announcements</a></li>
+            {% endif %}
         </ul>
         <hr class="border-secondary">
         <div class="small text-secondary">
