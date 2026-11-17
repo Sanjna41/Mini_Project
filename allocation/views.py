@@ -20,7 +20,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle
+from reportlab.platypus import LongTable, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .allocation_algorithm import allocate_all_duties
 from .csv_merge import merge_seating_csv
@@ -1153,15 +1153,94 @@ def export_seating_plan_pdf(request, exam_id):
     seatings = _seating_export_rows(exam)
     if not seatings:
         return HttpResponse('No seating plan has been generated for this exam.', status=404)
-    rows = [[
-        seat.roll_no, seat.classroom.name, seat.seat_no, seat.row_no, seat.col_no,
-    ] for seat in seatings]
     subtitle = f'{exam.date:%d %b %Y} | {exam.get_slot_display()} | {exam.subject or "Exam"}'
-    return _render_table_pdf(
-        f'seating_plan_{exam.pk}.pdf', 'Exam Seating Plan', subtitle,
-        ['Roll No.', 'Room', 'Seat', 'Row', 'Column'],
-        rows, [35, 50, 25, 25, 25],
+    buffer = BytesIO()
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    room_style = ParagraphStyle(
+        'SeatingRoomTitle', parent=styles['Heading2'], fontSize=13, leading=16,
+        textColor=colors.HexColor('#16324f'), spaceAfter=3 * mm,
     )
+    cell_style = ParagraphStyle(
+        'SeatingGridCell', parent=styles['BodyText'], fontSize=6, leading=7,
+        alignment=1,
+    )
+    header_style = ParagraphStyle(
+        'SeatingGridHeader', parent=cell_style, fontName='Helvetica-Bold',
+        fontSize=6, textColor=colors.white,
+    )
+    document = SimpleDocTemplate(
+        buffer, pagesize=landscape(A4), leftMargin=12 * mm, rightMargin=12 * mm,
+        topMargin=12 * mm, bottomMargin=12 * mm, title='Exam Seating Plan',
+    )
+    story = [
+        Paragraph('Exam Seating Plan', title_style),
+        Paragraph(escape(subtitle), styles['Normal']),
+        Spacer(1, 6 * mm),
+    ]
+    page_width = landscape(A4)[0] - document.leftMargin - document.rightMargin
+    rooms = []
+    for seat in seatings:
+        if not rooms or rooms[-1][0].pk != seat.classroom_id:
+            rooms.append((seat.classroom, []))
+        rooms[-1][1].append(seat)
+
+    for room_index, (room, room_seats) in enumerate(rooms):
+        if room_index:
+            story.append(PageBreak())
+        ranges = SeatingAllotment.objects.filter(
+            exam_schedule=exam, classroom=room,
+        ).select_related('section').order_by('section__name', 'from_roll_no')
+        range_text = ', '.join(
+            f'{item.section.name}: {item.from_roll_no}–{item.to_roll_no}' for item in ranges
+        )
+        story.append(Paragraph(escape(f'{room.name} ({room.rows} rows × {room.columns} columns)'), room_style))
+        if range_text:
+            story.append(Paragraph(escape(range_text), styles['Normal']))
+            story.append(Spacer(1, 3 * mm))
+
+        seat_by_position = {(seat.row_no, seat.col_no): seat for seat in room_seats}
+        grid = [[Paragraph('Row / Column', header_style)] + [
+            Paragraph(f'Column {column}', header_style)
+            for column in range(1, room.columns + 1)
+        ]]
+        for row_no in range(1, room.rows + 1):
+            row = [Paragraph(f'Row {row_no}', header_style)]
+            for col_no in range(1, room.columns + 1):
+                seat = seat_by_position.get((row_no, col_no))
+                if seat:
+                    value = f'<b>{seat.roll_no}</b><br/>{escape(seat.section.name)}<br/>Seat {seat.seat_no}'
+                else:
+                    value = '—'
+                row.append(Paragraph(value, cell_style))
+            grid.append(row)
+
+        row_header_width = 18 * mm
+        cell_width = (page_width - row_header_width) / room.columns
+        table = Table(
+            grid, colWidths=[row_header_width] + [cell_width] * room.columns,
+            repeatRows=1, hAlign='LEFT',
+        )
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16324f')),
+            ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#315b7d')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 1), (0, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#b7c4d1')),
+            ('BACKGROUND', (1, 1), (-1, -1), colors.white),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(table)
+
+    document.build(story)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="seating_plan_{exam.pk}.pdf"'
+    return response
 
 
 @staff_required
