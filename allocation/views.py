@@ -420,7 +420,10 @@ def _create_import_account(import_type, row, request):
     user.save()
     profile.user = user
     profile.save(update_fields=['user'])
-    PasswordResetForm({'email': profile.email}).save(
+    reset_form = PasswordResetForm({'email': profile.email})
+    if not reset_form.is_valid():
+        raise ValidationError('A password setup email could not be prepared for this account.')
+    reset_form.save(
         request=request, use_https=request.is_secure(), domain_override=request.get_host(),
         subject_template_name='registration/password_reset_subject.txt',
         email_template_name='registration/password_reset_email.html',

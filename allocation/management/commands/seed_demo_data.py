@@ -153,7 +153,7 @@ class Command(BaseCommand):
             scholar, _ = PhDScholar.objects.update_or_create(
                 email=f"scholar{index:02d}@example.test",
                 defaults={
-                    "name": f"Research Scholar {index:02d}",
+                    "name": f"PhD Scholar {index:02d}",
                     "duty_quota": 12,
                 },
             )
